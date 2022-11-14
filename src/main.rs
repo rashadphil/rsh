@@ -6,6 +6,7 @@ use rustyline::{Editor, Result};
 
 mod commands;
 mod error;
+mod types;
 
 fn main() -> Result<()> {
     let mut rl = Editor::<()>::new()?;
@@ -27,13 +28,13 @@ fn main() -> Result<()> {
 
                 let _ = match valid_commands.get(&line) {
                     Some(command) => {
-                      command.run();
+                        let result = command.run();
+                        println!("Result : {:?}", result);
                     }
                     None => {
                         println!("Line: {}", line);
                     }
                 };
-
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

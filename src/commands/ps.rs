@@ -1,4 +1,4 @@
-use crate::error::ShellError;
+use crate::{error::ShellError, types::primary::Value};
 
 use super::Command;
 
@@ -6,7 +6,7 @@ use super::Command;
 pub struct Ps {}
 
 impl Command for Ps {
-    fn run(&self) -> Result<(), ShellError> {
-        Ok(())
+    fn run(&self) -> Result<Value, ShellError> {
+        Ok(Value::string("Not yet Implemented!"))
     }
 }

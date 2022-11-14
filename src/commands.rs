@@ -1,8 +1,8 @@
 pub mod ls;
 pub mod ps;
 
-use crate::error::ShellError;
+use crate::{error::ShellError, types::primary::Value};
 
 pub trait Command {
-    fn run(&self) -> Result<(), ShellError>;
+    fn run(&self) -> Result<Value, ShellError>;
 }

@@ -1,3 +1,9 @@
 #V2
 ls
 ps
+ls
+ps
+p
+ls
+git 
+ls
