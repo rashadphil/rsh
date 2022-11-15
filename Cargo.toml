@@ -11,3 +11,4 @@ derive-new = "0.5"
 tabled = "0.10.0"
 chrono = {version = "0.4.23", features = ["std"]}
 sysinfo = "0.3.15"
+ansi_term = "0.12.1"

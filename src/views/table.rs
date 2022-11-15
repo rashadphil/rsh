@@ -38,7 +38,7 @@ impl RenderView for TableView {
         }
 
         let mut table = builder.build();
-        table.with(Style::modern());
+        table.with(Style::rounded());
 
         vec![table.to_string()]
     }

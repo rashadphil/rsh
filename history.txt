@@ -16,3 +16,15 @@ ls
 ps
 ls
 ps
+ls
+exit
+ls
+ps
+ls
+cd
+ls
+ ls
+ls
+cd
+ls
+git status
