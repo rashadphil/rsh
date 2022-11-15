@@ -20,7 +20,7 @@ fn main() -> Result<()> {
 
     let mut valid_commands = BTreeMap::<String, Box<dyn Command>>::new();
     let ls = commands::ls::Ls {};
-    let ps = commands::ps::Ps {};
+    let ps = commands::ps::Ps::new(sysinfo::System::default());
     valid_commands.insert("ls".to_string(), Box::new(ls));
     valid_commands.insert("ps".to_string(), Box::new(ps));
 
@@ -30,13 +30,13 @@ fn main() -> Result<()> {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
 
-                let _ = match valid_commands.get(&line) {
+                let _ = match valid_commands.get_mut(&line) {
                     Some(command) => {
                         let result = command.run().unwrap();
                         let base_view = result.to_base_view();
                         let rendered = base_view.render();
                         for line in rendered {
-                          println!("{}", line);
+                            println!("{}", line);
                         }
                         // println!("Result : {:?}", result);
                     }

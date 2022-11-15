@@ -11,3 +11,8 @@ cargo run
 ls
 ps
 ls
+ps
+ls
+ps
+ls
+ps

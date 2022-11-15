@@ -4,5 +4,5 @@ pub mod ps;
 use crate::{error::ShellError, types::primary::Value};
 
 pub trait Command {
-    fn run(&self) -> Result<Value, ShellError>;
+    fn run(&mut self) -> Result<Value, ShellError>;
 }
