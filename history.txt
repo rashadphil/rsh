@@ -28,3 +28,12 @@ ls
 cd
 ls
 git status
+ls
+ps
+ls
+lss
+pwd
+ps
+ls
+ps
+ls

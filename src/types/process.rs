@@ -22,7 +22,7 @@ impl Process {
 
         dict.insert("name", Value::string(name));
         dict.insert("pid", Value::int(pid));
-        dict.insert("memory", Value::int(memory as i64));
+        dict.insert("memory", Value::size(memory));
 
         Ok(Process { inner: proc, dict })
     }

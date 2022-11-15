@@ -16,6 +16,7 @@ pub enum Primitive {
     String(String),
     Integer(i64),
     Time(SystemTime),
+    Size(u64),
     Empty,
 }
 
@@ -28,6 +29,21 @@ impl Primitive {
             Primitive::Time(t) => {
                 let as_utc: DateTime<Utc> = t.clone().into();
                 as_utc.date_naive().to_string()
+            }
+            Primitive::Size(bytes) => {
+                let kilobytes = (*bytes as f32) / 1024.0;
+                let megabytes = kilobytes / 1024.0;
+                let gigabytes = megabytes / 1024.0;
+
+                if gigabytes >= 1.0 {
+                    format!("{:.2} GB", gigabytes)
+                } else if megabytes >= 1.0 {
+                    format!("{:.2} MB", megabytes)
+                } else if kilobytes >= 1.0 {
+                    format!("{:.2} KB", kilobytes)
+                } else {
+                    format!("{:.2} bytes", bytes)
+                }
             }
         }
     }
@@ -83,6 +99,10 @@ impl Value {
 
     pub fn time(time: impl Into<SystemTime>) -> Self {
         Value::Primitive(Primitive::Time(time.into()))
+    }
+
+    pub fn size(size: impl Into<u64>) -> Self {
+        Value::Primitive(Primitive::Size(size.into()))
     }
 
     pub fn empty() -> Self {

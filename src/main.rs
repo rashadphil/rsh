@@ -36,7 +36,11 @@ fn main() -> Result<()> {
 
     loop {
         let cwd = context.env.cwd().to_string_lossy().to_string();
-        let readline = rl.readline(&format!("{}\n> ", Color::Cyan.bold().paint(cwd)));
+        let readline = rl.readline(&format!(
+            "{}\n{} ",
+            Color::Cyan.bold().paint(cwd),
+            Color::Red.bold().paint("> ".to_string())
+        ));
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
