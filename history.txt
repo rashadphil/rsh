@@ -7,3 +7,7 @@ p
 ls
 git 
 ls
+cargo run
+ls
+ps
+ls

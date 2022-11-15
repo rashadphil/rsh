@@ -18,7 +18,7 @@ impl Command for Ls {
         let mut dir_entries = vec![];
 
         for path in paths {
-            let entry = Value::object(DirEntry::new(path?));
+            let entry = Value::object(DirEntry::new(path?)?);
             dir_entries.push(entry);
         }
 

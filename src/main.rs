@@ -1,12 +1,16 @@
 use std::collections::BTreeMap;
 
-use crate::commands::Command;
 use rustyline::error::ReadlineError;
 use rustyline::{Editor, Result};
+use views::RenderView;
+
+use crate::commands::Command;
+use crate::types::primary::ToBaseView;
 
 mod commands;
 mod error;
 mod types;
+mod views;
 
 fn main() -> Result<()> {
     let mut rl = Editor::<()>::new()?;
@@ -28,8 +32,13 @@ fn main() -> Result<()> {
 
                 let _ = match valid_commands.get(&line) {
                     Some(command) => {
-                        let result = command.run();
-                        println!("Result : {:?}", result);
+                        let result = command.run().unwrap();
+                        let base_view = result.to_base_view();
+                        let rendered = base_view.render();
+                        for line in rendered {
+                          println!("{}", line);
+                        }
+                        // println!("Result : {:?}", result);
                     }
                     None => {
                         println!("Line: {}", line);
