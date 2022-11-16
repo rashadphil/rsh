@@ -1,0 +1,19 @@
+# get files in current directory -> sort by size -> display as table
+ls | sort f -> f.size | table
+
+# get files in current directory -> filter where size >= 50 MB -> display as table
+ls | filter f -> f.size >= 50 | table
+
+# get all processes -> sort by memory used -> take first 10
+ps | sort p -> p.memory | take 10
+
+# make files with names {0-100}.cc
+seq 100 | map n -> touch "n.cc"
+
+
+# Types?
+ls         :: Array  
+ps         :: Array  
+
+filter     :: Array -> Array              
+map        :: Array -> Fn -> Array
