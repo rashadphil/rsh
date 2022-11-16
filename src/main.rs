@@ -21,6 +21,8 @@ pub struct Context {
 }
 
 fn main() -> Result<()> {
+    let PROMPT_CHAR = "➜ ";
+
     let context: Context = Context::default();
 
     let mut rl = Editor::<()>::new()?;
@@ -35,11 +37,17 @@ fn main() -> Result<()> {
     valid_commands.insert("ps".to_string(), Box::new(ps));
 
     loop {
-        let cwd = context.env.cwd().to_string_lossy().to_string();
+        let cwd = context.env.cwd();
+        let truncated_cwd = cwd
+            .file_name()
+            .expect("Failed to read path")
+            .to_string_lossy()
+            .to_string();
+
         let readline = rl.readline(&format!(
-            "{}\n{} ",
-            Color::Cyan.bold().paint(cwd),
-            Color::Red.bold().paint("> ".to_string())
+            " {}\n {} ",
+            Color::Cyan.bold().paint(truncated_cwd),
+            Color::Red.bold().paint(PROMPT_CHAR)
         ));
         match readline {
             Ok(line) => {
