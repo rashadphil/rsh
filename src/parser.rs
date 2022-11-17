@@ -26,6 +26,7 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
             || c.clone() == '_'
             || c.clone() == '/'
             || c.clone() == '.'
+            || c.clone() == '-'
     };
 
     let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
