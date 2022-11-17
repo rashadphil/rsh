@@ -21,7 +21,11 @@ enum Token {
 
 fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let is_word_char = |c: &char| {
-        c.is_ascii_alphabetic() || c.is_ascii_alphanumeric() || c.clone() == '_' || c.clone() == '/'
+        c.is_ascii_alphabetic()
+            || c.is_ascii_alphanumeric()
+            || c.clone() == '_'
+            || c.clone() == '/'
+            || c.clone() == '.'
     };
 
     let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
