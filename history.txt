@@ -54,3 +54,10 @@ pwd
 ls
 ps
 ls
+ps
+cd
+ls
+nu
+ls
+pwd
+ls

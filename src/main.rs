@@ -1,5 +1,6 @@
 use ansi_term::Color;
 use std::collections::BTreeMap;
+use std::process;
 
 use environment::Environment;
 use rustyline::error::ReadlineError;
@@ -7,11 +8,13 @@ use rustyline::{Editor, Result};
 use views::RenderView;
 
 use crate::commands::Command;
+
 use crate::types::primary::ToBaseView;
 
 mod commands;
 mod environment;
 mod error;
+mod parser;
 mod types;
 mod views;
 
@@ -51,6 +54,11 @@ fn main() -> Result<()> {
         ));
         match readline {
             Ok(line) => {
+                let line = line.trim().to_string();
+
+                let parsed_pipeline = parser::parse(line.clone());
+                println!("parsed pipeline {:?}", parsed_pipeline);
+
                 rl.add_history_entry(line.as_str());
 
                 let _ = match valid_commands.get_mut(&line) {
@@ -63,7 +71,8 @@ fn main() -> Result<()> {
                         }
                     }
                     None => {
-                        println!("Line: {}", line);
+                        let mut child = process::Command::new(line).spawn().unwrap();
+                        child.wait();
                     }
                 };
             }
