@@ -1,7 +1,9 @@
+use core::fmt;
+
 use chumsky::{prelude::*, Stream};
 use chumsky::{
     primitive::{filter, just},
-    text::{TextParser},
+    text::TextParser,
     Parser,
 };
 
@@ -59,6 +61,17 @@ pub enum Val {
     Num(f64),
 }
 
+impl fmt::Display for Val {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Val::Bool(_) => todo!(),
+            Val::String(s) => write!(f, "{}", s.clone()),
+            Val::List(_) => todo!(),
+            Val::Num(n) => write!(f, "{}", n.to_string()),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Expr {
     Val(Val),
@@ -66,10 +79,20 @@ pub enum Expr {
     Command(Val, Vec<Box<Expr>>),
 }
 
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Expr::Val(v) => write!(f, "{}", v.to_string()),
+            Expr::LambdaExpr(_, _) => todo!(),
+            Expr::Command(_, _) => todo!(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ParsedCommand {
-    name: String,
-    args: Vec<Box<Expr>>,
+    pub name: String,
+    pub args: Vec<Box<Expr>>,
 }
 
 impl ParsedCommand {
@@ -86,7 +109,7 @@ impl ParsedCommand {
 
 #[derive(Debug, Default, new)]
 pub struct ParsedPipeline {
-    commands: Vec<ParsedCommand>,
+    pub commands: Vec<ParsedCommand>,
 }
 
 fn ast_builder() -> impl Parser<Token, ParsedPipeline, Error = Simple<Token>> {

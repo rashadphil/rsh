@@ -1,6 +1,9 @@
 use ansi_term::Color;
+use commands::{CommandType, ExternalCommand, InternalCommand};
+use parser::ParsedCommand;
 use std::collections::BTreeMap;
 use std::process;
+use std::rc::Rc;
 
 use environment::Environment;
 use rustyline::error::ReadlineError;
@@ -21,23 +24,23 @@ mod views;
 #[derive(Default)]
 pub struct Context {
     env: Environment,
+    valid_commands: BTreeMap<String, Rc<dyn Command>>,
 }
 
 fn main() -> Result<()> {
     let PROMPT_CHAR = "➜ ";
 
-    let context: Context = Context::default();
+    let mut context: Context = Context::default();
 
     let mut rl = Editor::<()>::new()?;
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
-
-    let mut valid_commands = BTreeMap::<String, Box<dyn Command>>::new();
     let ls = commands::ls::Ls {};
     let ps = commands::ps::Ps::new(sysinfo::System::default());
-    valid_commands.insert("ls".to_string(), Box::new(ls));
-    valid_commands.insert("ps".to_string(), Box::new(ps));
+
+    context.valid_commands.insert("ls".to_string(), Rc::new(ls));
+    context.valid_commands.insert("ps".to_string(), Rc::new(ps));
 
     loop {
         let cwd = context.env.cwd();
@@ -56,25 +59,41 @@ fn main() -> Result<()> {
             Ok(line) => {
                 let line = line.trim().to_string();
 
-                let parsed_pipeline = parser::parse(line.clone());
-                println!("parsed pipeline {:?}", parsed_pipeline);
+                let parsed_pipeline = parser::parse(&line);
 
-                rl.add_history_entry(line.as_str());
+                // TODO : add support for piping
+                let first_command = &parsed_pipeline.commands[0];
+                let command = parsed_to_command(&context, first_command);
 
-                let _ = match valid_commands.get_mut(&line) {
-                    Some(command) => {
-                        let result = command.run().unwrap();
+                // run the command
+                match command {
+                    CommandType::Internal(internal) => {
+                        let command = internal.command;
+                        let args = internal.args;
+
+                        let result = command.run(args).unwrap();
                         let base_view = result.to_base_view();
                         let rendered = base_view.render();
                         for line in rendered {
                             println!("{}", line);
                         }
                     }
-                    None => {
-                        let mut child = process::Command::new(line).spawn().unwrap();
-                        child.wait();
+                    CommandType::External(external) => {
+                        let name = external.command;
+                        let args = external.args;
+
+                        let child = process::Command::new(&name).args(args).spawn();
+
+                        match child {
+                            Ok(mut child) => {
+                                child.wait();
+                            }
+                            Err(_) => println!("rush: command not found {}", name),
+                        };
                     }
-                };
+                }
+
+                rl.add_history_entry(line.as_str());
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
@@ -91,4 +110,25 @@ fn main() -> Result<()> {
         }
     }
     rl.save_history("history.txt")
+}
+
+fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandType {
+    let name = &parsed_command.name;
+    let args = &parsed_command.args;
+
+    match ctx.valid_commands.get(name) {
+        Some(command) => {
+            let command = command.clone();
+
+            // TODO : add parsed arguments to internal command
+            let internal_command = InternalCommand::new(command, vec![]);
+            CommandType::Internal(internal_command)
+        }
+        None => {
+            let name = name.to_string();
+            let args: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
+            let external_command = ExternalCommand::new(name, args);
+            CommandType::External(external_command)
+        }
+    }
 }

@@ -13,8 +13,9 @@ pub struct Ps {
 }
 
 impl Command for Ps {
-    fn run(&mut self) -> Result<Value, ShellError> {
-        self.system.refresh_all();
+    fn run(&self, args: Vec<Value>) -> Result<Value, ShellError> {
+        // TODO: currently not refreshable, self is not mutable
+        // self.system.refresh_all();
         let process_list: Vec<sysinfo::Process> =
             self.system.get_process_list().values().cloned().collect();
 

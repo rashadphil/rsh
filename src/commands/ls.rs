@@ -11,7 +11,7 @@ use super::Command;
 pub struct Ls {}
 
 impl Command for Ls {
-    fn run(&mut self) -> Result<Value, ShellError> {
+    fn run(&self, args: Vec<Value>) -> Result<Value, ShellError> {
         let current_dir = env::current_dir()?;
         let paths = fs::read_dir(current_dir)?;
 
