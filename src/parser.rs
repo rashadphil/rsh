@@ -25,11 +25,11 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let is_word_char = |c: &char| {
         c.is_ascii_alphabetic()
             || c.is_ascii_alphanumeric()
-            || c.clone() == '_'
-            || c.clone() == '/'
-            || c.clone() == '.'
-            || c.clone() == '-'
-            || c.clone() == '~'
+            || *c == '_'
+            || *c == '/'
+            || *c == '.'
+            || *c == '-'
+            || *c == '~'
     };
 
     let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
@@ -84,9 +84,9 @@ impl fmt::Display for Val {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Val::Bool(_) => todo!(),
-            Val::String(s) => write!(f, "{}", s.clone()),
+            Val::String(s) => write!(f, "{}", s),
             Val::List(_) => todo!(),
-            Val::Num(n) => write!(f, "{}", n.to_string()),
+            Val::Num(n) => write!(f, "{}", n),
         }
     }
 }
@@ -95,7 +95,7 @@ impl fmt::Display for Val {
 pub enum Expr {
     Val(Val),
     LambdaExpr(Val, Box<Expr>),
-    Command(Val, Vec<Box<Expr>>),
+    Command(Val, Vec<Expr>),
 }
 
 impl Expr {
@@ -111,7 +111,7 @@ impl Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Expr::Val(v) => write!(f, "{}", v.to_string()),
+            Expr::Val(v) => write!(f, "{}", v),
             Expr::LambdaExpr(_, _) => todo!(),
             Expr::Command(_, _) => todo!(),
         }
@@ -121,7 +121,7 @@ impl fmt::Display for Expr {
 #[derive(Debug)]
 pub struct ParsedCommand {
     pub name: String,
-    pub args: Vec<Box<Expr>>,
+    pub args: Vec<Expr>,
 }
 
 impl ParsedCommand {
@@ -143,28 +143,28 @@ pub struct ParsedPipeline {
 
 fn ast_builder() -> impl Parser<Token, ParsedPipeline, Error = Simple<Token>> {
     let ident = filter_map(|span, tok: Token| match tok {
-        Token::Item(item) => Ok(Val::String(item.clone())),
+        Token::Item(item) => Ok(Val::String(item)),
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(tok))),
     });
 
-    let args = ident.clone().repeated();
+    let args = ident.repeated();
 
     // name of command followed by arguments
     let command = ident.then(args).map(|(name, command_args)| {
         let args_expr = command_args
             .into_iter()
-            .map(|arg| Box::new(Expr::Val(arg)))
+            .map(Expr::Val)
             .collect();
         let command_expr = Expr::Command(name, args_expr);
         ParsedCommand::from_expr(command_expr)
     });
 
     // commands seperated by a Pipe
-    let pipeline = command
-        .separated_by(just(Token::Pipe))
-        .map(|commands| ParsedPipeline::new(commands));
+    
 
-    pipeline
+    command
+        .separated_by(just(Token::Pipe))
+        .map(ParsedPipeline::new)
 }
 
 pub fn parse(query: impl Into<String>) -> ParsedPipeline {

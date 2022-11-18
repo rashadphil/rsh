@@ -87,7 +87,7 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
 
                 // TODO : add support for piping
                 let first_command = &parsed_pipeline.commands[0];
-                let command = parsed_to_command(&ctx, first_command);
+                let command = parsed_to_command(ctx, first_command);
                 match command {
                     CommandType::Internal(internal) => {
                         let command = internal.command;

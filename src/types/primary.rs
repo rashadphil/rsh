@@ -23,7 +23,7 @@ impl fmt::Display for Primitive {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Primitive::String(s) => write!(f, "{}", s),
-            Primitive::Integer(i) => write!(f, "{}", i.to_string()),
+            Primitive::Integer(i) => write!(f, "{}", i),
             Primitive::Time(_) => todo!(),
             Primitive::Size(_) => todo!(),
         }
@@ -36,7 +36,7 @@ impl Primitive {
             Primitive::String(s) => s.to_string(),
             Primitive::Integer(i) => i.to_string(),
             Primitive::Time(t) => {
-                let as_utc: DateTime<Utc> = t.clone().into();
+                let as_utc: DateTime<Utc> = (*t).into();
                 as_utc.date_naive().to_string()
             }
             Primitive::Size(bytes) => {
@@ -70,7 +70,7 @@ impl fmt::Display for Value {
         match self {
             Value::Object(_) => todo!(),
             Value::List(_) => todo!(),
-            Value::Primitive(p) => write!(f, "{}", p.to_string()),
+            Value::Primitive(p) => write!(f, "{}", p),
         }
     }
 }

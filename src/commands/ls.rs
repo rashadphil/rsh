@@ -14,9 +14,9 @@ impl Command for Ls {
     fn run(&self, args: Args) -> Result<Value, ShellError> {
         let cwd = env::current_dir()?;
 
-        let target_dir = if args.args.len() > 0 {
+        let target_dir = if !args.args.is_empty() {
             let input_path = &args.args[0].to_string();
-            cwd.join(input_path.to_string())
+            cwd.join(input_path)
         } else {
             cwd
         };
