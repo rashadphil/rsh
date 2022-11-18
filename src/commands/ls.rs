@@ -5,15 +5,23 @@ use crate::{
     types::{direntry::DirEntry, primary::Value},
 };
 
-use super::{Command, Args};
+use super::{Args, Command};
 
 #[derive(Debug)]
 pub struct Ls;
 
 impl Command for Ls {
     fn run(&self, args: Args) -> Result<Value, ShellError> {
-        let current_dir = env::current_dir()?;
-        let paths = fs::read_dir(current_dir)?;
+        let cwd = env::current_dir()?;
+
+        let target_dir = if args.args.len() > 0 {
+            let input_path = &args.args[0].to_string();
+            cwd.join(input_path.to_string())
+        } else {
+            cwd
+        };
+
+        let paths = fs::read_dir(target_dir)?;
 
         let mut dir_entries = vec![];
 
