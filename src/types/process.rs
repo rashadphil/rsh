@@ -8,7 +8,6 @@ use super::{
 
 #[derive(Debug)]
 pub struct Process {
-    inner: sysinfo::Process,
     dict: DataDict,
 }
 
@@ -24,7 +23,7 @@ impl Process {
         dict.insert("pid", Value::int(pid));
         dict.insert("memory", Value::size(memory));
 
-        Ok(Process { inner: proc, dict })
+        Ok(Process { dict })
     }
 }
 

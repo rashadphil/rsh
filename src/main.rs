@@ -29,7 +29,7 @@ pub struct Context {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let PROMPT_CHAR = "➜ ";
+    let prompt_char = "➜ ";
 
     let mut context: Context = Context::default();
 
@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let readline = rl.readline(&format!(
             " {}\n {} ",
             Color::Cyan.bold().paint(truncated_cwd),
-            Color::Red.bold().paint(PROMPT_CHAR)
+            Color::Red.bold().paint(prompt_char)
         ));
 
         match process_readline(&context, readline) {
@@ -81,6 +81,7 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
     match readline {
         Ok(line) => match line.as_str().trim() {
             "exit" => LineResult::Break,
+            "" => LineResult::Success,
             _ => {
                 let parsed_pipeline = parser::parse(&line);
 
@@ -112,7 +113,7 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
 
                         match child {
                             Ok(mut child) => {
-                                child.wait();
+                                child.wait().unwrap();
                             }
                             Err(_) => println!("rush: command not found {}", name),
                         };

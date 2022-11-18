@@ -1,11 +1,7 @@
-use std::path::PathBuf;
-
 use crate::{
     error::ShellError,
-    types::{primary::Value, process::Process},
+    types::{primary::Value},
 };
-use sysinfo::SystemExt;
-
 use super::{Args, Command};
 
 pub struct Cd;

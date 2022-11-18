@@ -1,5 +1,13 @@
-# get files in current directory -> sort by size -> display as table
-ls | sort f -> f.size | table
+ls some_dir/
+
+# get files in some directory -> sort by size -> display as table
+ls some_dir/ | sort f -> f.size | table
+            
+            ParsedComm
+          /           \
+      sort            Expr(Lambda)
+                      /         \
+                  String(f)      
 
 # get files in current directory -> filter where size >= 50 MB -> display as table
 ls | filter f -> f.size >= 50 | table
@@ -17,3 +25,26 @@ ps         :: Array
 
 filter     :: Array -> Array              
 map        :: Array -> Fn -> Array
+
+
+ls | filter f -> f.size >= 50 | table
+
+# process
+Query : 
+  ls some_dir/ | sortby size | table
+Lexed : 
+  <item : "ls">, <item : "some_dir/">, <pipe>, <item : "sort">, <item : "f">, <arrow> <item : "table">
+Parsed? (Stage 1) :
+  Command #1:
+    <item : "ls">, <item : "some_dir/">, 
+  Command #2:
+    <item : "sort">, <item : "f">, <arrow> <item: "f.size"> 
+  Command #3:
+    <item : "table">
+
+AST :
+  (BLOCK
+    (CMD (name (String ls)) (args (String some_dir/)))
+    (PIPE)
+    (CMD (name sortby) (args (String size)))
+  )

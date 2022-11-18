@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fs};
+use std::fs;
 
 use crate::error::ShellError;
 
@@ -10,7 +10,6 @@ use super::{
 
 #[derive(Debug)]
 pub struct DirEntry {
-    inner: fs::DirEntry,
     dict: DataDict,
 }
 
@@ -30,7 +29,7 @@ impl DirEntry {
         dict.insert("modified", Value::time(modified));
         dict.insert("accessed", Value::time(accessed));
 
-        Ok(DirEntry { inner: entry, dict })
+        Ok(DirEntry { dict })
     }
 }
 

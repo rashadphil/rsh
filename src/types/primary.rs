@@ -17,7 +17,6 @@ pub enum Primitive {
     Integer(i64),
     Time(SystemTime),
     Size(u64),
-    Empty,
 }
 
 impl fmt::Display for Primitive {
@@ -27,7 +26,6 @@ impl fmt::Display for Primitive {
             Primitive::Integer(i) => write!(f, "{}", i.to_string()),
             Primitive::Time(_) => todo!(),
             Primitive::Size(_) => todo!(),
-            Primitive::Empty => todo!(),
         }
     }
 }
@@ -37,7 +35,6 @@ impl Primitive {
         match self {
             Primitive::String(s) => s.to_string(),
             Primitive::Integer(i) => i.to_string(),
-            Primitive::Empty => todo!(),
             Primitive::Time(t) => {
                 let as_utc: DateTime<Utc> = t.clone().into();
                 as_utc.date_naive().to_string()
@@ -82,23 +79,23 @@ impl Value {
     pub fn data_descriptors(&self) -> Vec<Descriptor> {
         match self {
             Value::Object(o) => o.data_descriptors(),
-            Value::List(l) => todo!(),
-            Value::Primitive(p) => todo!(),
+            Value::List(_l) => todo!(),
+            Value::Primitive(_p) => todo!(),
         }
     }
 
     pub fn get_data(&self, desc: &Descriptor) -> &Value {
         match self {
             Value::Object(o) => o.get_data(desc),
-            Value::List(l) => todo!(),
-            Value::Primitive(p) => todo!(),
+            Value::List(_l) => todo!(),
+            Value::Primitive(_p) => todo!(),
         }
     }
 
     pub fn format(&self) -> String {
         match self {
-            Value::Object(o) => todo!(),
-            Value::List(l) => todo!(),
+            Value::Object(_o) => todo!(),
+            Value::List(_l) => todo!(),
             Value::Primitive(p) => p.format(),
         }
     }
@@ -125,10 +122,6 @@ impl Value {
 
     pub fn size(size: impl Into<u64>) -> Self {
         Value::Primitive(Primitive::Size(size.into()))
-    }
-
-    pub fn empty() -> Self {
-        Value::Primitive(Primitive::Empty)
     }
 }
 

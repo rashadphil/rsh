@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
 
-use derive_new::new;
-
 use super::{
     descriptor::Descriptor,
-    primary::{Primitive, RshObject, Value},
+    primary::{RshObject, Value},
 };
 
 #[derive(Debug)]

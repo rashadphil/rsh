@@ -4,12 +4,12 @@ use crate::{
 };
 use sysinfo::SystemExt;
 
-use super::{Command, Args};
+use super::{Args, Command};
 
 pub struct Ps;
 
 impl Command for Ps {
-    fn run(&self, args: Args) -> Result<Value, ShellError> {
+    fn run(&self, _args: Args) -> Result<Value, ShellError> {
         let system = sysinfo::System::new();
         let process_list: Vec<sysinfo::Process> =
             system.get_process_list().values().cloned().collect();
