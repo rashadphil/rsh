@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use indexmap::IndexMap;
 
 use super::{
     descriptor::Descriptor,
@@ -7,13 +7,13 @@ use super::{
 
 #[derive(Debug)]
 pub struct DataDict {
-    dict: BTreeMap<String, Value>,
+    dict: IndexMap<String, Value>,
 }
 
 impl DataDict {
     pub fn default() -> Self {
         DataDict {
-            dict: BTreeMap::default(),
+            dict: IndexMap::default(),
         }
     }
 
@@ -33,7 +33,7 @@ impl RshObject for DataDict {
     fn get_data(&self, desc: &Descriptor) -> &Value {
         match self.dict.get(&desc.name) {
             Some(val) => val,
-            None => panic!()
+            None => panic!(),
         }
     }
 }
