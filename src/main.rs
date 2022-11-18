@@ -1,14 +1,22 @@
-use ansi_term::Color;
+use std::borrow::Cow::Owned;
+
 use commands::{Args, CommandType, ExternalCommand, InternalCommand};
 use parser::ParsedCommand;
+use rustyline::completion::FilenameCompleter;
+use rustyline::error::ReadlineError;
+use rustyline::highlight::Highlighter;
+use rustyline::hint::HistoryHinter;
+
+use colored::*;
+use rustyline::{Config, Editor};
+use rustyline_derive::{Completer, Helper, Hinter, Validator};
+
 use std::collections::BTreeMap;
 use std::process;
 use std::rc::Rc;
 use types::primary::Value;
 
 use environment::Environment;
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
 use views::RenderView;
 
 use crate::commands::Command;
@@ -28,12 +36,35 @@ pub struct Context {
     valid_commands: BTreeMap<String, Rc<dyn Command>>,
 }
 
+#[derive(Helper, Completer, Hinter, Validator)]
+struct RushHelper {
+    #[rustyline(Completer)]
+    completer: FilenameCompleter,
+    #[rustyline(Hinter)]
+    hinter: HistoryHinter,
+}
+
+impl Highlighter for RushHelper {
+    fn highlight_hint<'h>(&self, hint: &'h str) -> std::borrow::Cow<'h, str> {
+        let colored = hint.truecolor(140, 140, 140);
+        Owned(format!("{}", colored))
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let prompt_char = "➜ ";
 
     let mut context: Context = Context::default();
 
-    let mut rl = Editor::<()>::new()?;
+    let config = Config::builder().history_ignore_space(true).build();
+
+    let mut rl = Editor::with_config(config)?;
+    let h = RushHelper {
+        completer: FilenameCompleter::new(),
+        hinter: HistoryHinter {},
+    };
+    rl.set_helper(Some(h));
+
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
@@ -55,12 +86,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let readline = rl.readline(&format!(
             " {}\n {} ",
-            Color::Cyan.bold().paint(truncated_cwd),
-            Color::Red.bold().paint(prompt_char)
+            truncated_cwd.cyan().bold(),
+            prompt_char.red().bold()
         ));
 
         match process_readline(&context, readline) {
-            LineResult::Success => continue,
+            LineResult::Success(line) => {
+                rl.add_history_entry(line);
+            }
             LineResult::Break => break,
             LineResult::Error(err) => println!("{}", err),
             LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
@@ -71,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 enum LineResult {
-    Success,
+    Success(String),
     Break,
     Error(String),
     Fatal(String),
@@ -81,7 +114,7 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
     match readline {
         Ok(line) => match line.as_str().trim() {
             "exit" => LineResult::Break,
-            "" => LineResult::Success,
+            "" => LineResult::Success("".to_string()),
             _ => {
                 let parsed_pipeline = parser::parse(&line);
 
@@ -120,10 +153,10 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
                     }
                 }
 
-                LineResult::Success
+                LineResult::Success(line)
             }
         },
-        Err(ReadlineError::Interrupted) => LineResult::Success,
+        Err(ReadlineError::Interrupted) => LineResult::Success("".to_string()),
         Err(ReadlineError::Eof) => LineResult::Break,
         Err(err) => LineResult::Fatal(err.to_string()),
     }
