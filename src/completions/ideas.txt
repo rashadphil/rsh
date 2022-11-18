@@ -1,0 +1,13 @@
+
+func file_dir_completions() {
+  ls
+}
+
+func file_only_completions() {
+  ls | filter f -> f.file_type = "file"
+}
+
+func zip_only_completions() {
+  ls | filter f -> f.extension = ".zip"
+}
+

@@ -8,7 +8,7 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::HistoryHinter;
 
 use colored::*;
-use rustyline::{Config, Editor};
+use rustyline::{CompletionType, Config, Editor};
 use rustyline_derive::{Completer, Helper, Hinter, Validator};
 
 use std::collections::BTreeMap;
@@ -45,8 +45,23 @@ struct RushHelper {
 }
 
 impl Highlighter for RushHelper {
+
     fn highlight_hint<'h>(&self, hint: &'h str) -> std::borrow::Cow<'h, str> {
         let colored = hint.truecolor(140, 140, 140);
+        Owned(format!("{}", colored))
+    }
+
+    fn highlight_candidate<'c>(
+        &self,
+        candidate: &'c str,
+        completion: CompletionType,
+    ) -> std::borrow::Cow<'c, str> {
+        let colored = if candidate.contains(".txt") {
+            candidate.black().on_bright_white()
+        } else {
+            candidate.white()
+        };
+        // let colored = candidate.red();
         Owned(format!("{}", colored))
     }
 }
@@ -56,7 +71,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut context: Context = Context::default();
 
-    let config = Config::builder().history_ignore_space(true).build();
+    let config = Config::builder()
+        .history_ignore_space(true)
+        .completion_type(CompletionType::CircularList)
+        .auto_add_history(true)
+        .build();
 
     let mut rl = Editor::with_config(config)?;
     let h = RushHelper {
@@ -91,9 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ));
 
         match process_readline(&context, readline) {
-            LineResult::Success(line) => {
-                rl.add_history_entry(line);
-            }
+            LineResult::Success(_) => continue,
             LineResult::Break => break,
             LineResult::Error(err) => println!("{}", err),
             LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
