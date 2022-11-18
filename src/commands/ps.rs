@@ -2,22 +2,17 @@ use crate::{
     error::ShellError,
     types::{primary::Value, process::Process},
 };
-use derive_new::new;
 use sysinfo::SystemExt;
 
-use super::Command;
+use super::{Command, Args};
 
-#[derive(new)]
-pub struct Ps {
-    system: sysinfo::System,
-}
+pub struct Ps;
 
 impl Command for Ps {
-    fn run(&self, args: Vec<Value>) -> Result<Value, ShellError> {
-        // TODO: currently not refreshable, self is not mutable
-        // self.system.refresh_all();
+    fn run(&self, args: Args) -> Result<Value, ShellError> {
+        let system = sysinfo::System::new();
         let process_list: Vec<sysinfo::Process> =
-            self.system.get_process_list().values().cloned().collect();
+            system.get_process_list().values().cloned().collect();
 
         let mut process_entries = vec![];
 

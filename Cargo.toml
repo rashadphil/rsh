@@ -13,3 +13,4 @@ chrono = {version = "0.4.23", features = ["std"]}
 sysinfo = "0.3.15"
 ansi_term = "0.12.1"
 chumsky = "0.8.0"
+home = "0.5.4"

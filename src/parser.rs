@@ -9,6 +9,8 @@ use chumsky::{
 
 use derive_new::new;
 
+use crate::types;
+
 pub type Span = std::ops::Range<usize>;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -27,6 +29,7 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
             || c.clone() == '/'
             || c.clone() == '.'
             || c.clone() == '-'
+            || c.clone() == '~'
     };
 
     let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
@@ -66,6 +69,17 @@ pub enum Val {
     Num(f64),
 }
 
+impl Val {
+    pub fn to_value(&self) -> types::primary::Value {
+        match self {
+            Val::Bool(_) => todo!(),
+            Val::String(s) => types::primary::Value::string(s),
+            Val::List(_) => todo!(),
+            Val::Num(_) => todo!(),
+        }
+    }
+}
+
 impl fmt::Display for Val {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -82,6 +96,16 @@ pub enum Expr {
     Val(Val),
     LambdaExpr(Val, Box<Expr>),
     Command(Val, Vec<Box<Expr>>),
+}
+
+impl Expr {
+    pub fn to_value(&self) -> types::primary::Value {
+        match self {
+            Expr::Val(v) => v.to_value(),
+            Expr::LambdaExpr(_, _) => todo!(),
+            Expr::Command(_, _) => todo!(),
+        }
+    }
 }
 
 impl fmt::Display for Expr {

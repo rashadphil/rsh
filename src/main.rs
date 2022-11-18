@@ -1,13 +1,14 @@
 use ansi_term::Color;
-use commands::{CommandType, ExternalCommand, InternalCommand};
+use commands::{Args, CommandType, ExternalCommand, InternalCommand};
 use parser::ParsedCommand;
 use std::collections::BTreeMap;
 use std::process;
 use std::rc::Rc;
+use types::primary::Value;
 
 use environment::Environment;
 use rustyline::error::ReadlineError;
-use rustyline::{Editor, Result};
+use rustyline::Editor;
 use views::RenderView;
 
 use crate::commands::Command;
@@ -23,11 +24,11 @@ mod views;
 
 #[derive(Default)]
 pub struct Context {
-    env: Environment,
+    env: Rc<Environment>,
     valid_commands: BTreeMap<String, Rc<dyn Command>>,
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let PROMPT_CHAR = "➜ ";
 
     let mut context: Context = Context::default();
@@ -36,11 +37,13 @@ fn main() -> Result<()> {
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
-    let ls = commands::ls::Ls {};
-    let ps = commands::ps::Ps::new(sysinfo::System::default());
+    let ls = commands::ls::Ls;
+    let ps = commands::ps::Ps;
+    let cd = commands::cd::Cd;
 
     context.valid_commands.insert("ls".to_string(), Rc::new(ls));
     context.valid_commands.insert("ps".to_string(), Rc::new(ps));
+    context.valid_commands.insert("cd".to_string(), Rc::new(cd));
 
     loop {
         let cwd = context.env.cwd();
@@ -55,23 +58,46 @@ fn main() -> Result<()> {
             Color::Cyan.bold().paint(truncated_cwd),
             Color::Red.bold().paint(PROMPT_CHAR)
         ));
-        match readline {
-            Ok(line) => {
-                let line = line.trim().to_string();
 
+        match process_readline(&context, readline) {
+            LineResult::Success => continue,
+            LineResult::Break => break,
+            LineResult::Error(err) => println!("{}", err),
+            LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
+        }
+    }
+    rl.save_history("history.txt").unwrap();
+    Ok(())
+}
+
+enum LineResult {
+    Success,
+    Break,
+    Error(String),
+    Fatal(String),
+}
+
+fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> LineResult {
+    match readline {
+        Ok(line) => match line.as_str().trim() {
+            "exit" => LineResult::Break,
+            _ => {
                 let parsed_pipeline = parser::parse(&line);
 
                 // TODO : add support for piping
                 let first_command = &parsed_pipeline.commands[0];
-                let command = parsed_to_command(&context, first_command);
-
-                // run the command
+                let command = parsed_to_command(&ctx, first_command);
                 match command {
                     CommandType::Internal(internal) => {
                         let command = internal.command;
-                        let args = internal.args;
 
-                        let result = command.run(args).unwrap();
+                        let args = Args::new(ctx.env.clone(), internal.args);
+
+                        let result = match command.run(args) {
+                            Ok(res) => res,
+                            Err(e) => return LineResult::Error(e.to_string()),
+                        };
+
                         let base_view = result.to_base_view();
                         let rendered = base_view.render();
                         for line in rendered {
@@ -93,42 +119,29 @@ fn main() -> Result<()> {
                     }
                 }
 
-                rl.add_history_entry(line.as_str());
+                LineResult::Success
             }
-            Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-                break;
-            }
-            Err(ReadlineError::Eof) => {
-                println!("CTRL-D");
-                break;
-            }
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
-            }
-        }
+        },
+        Err(ReadlineError::Interrupted) => LineResult::Success,
+        Err(ReadlineError::Eof) => LineResult::Break,
+        Err(err) => LineResult::Fatal(err.to_string()),
     }
-    rl.save_history("history.txt")
 }
 
 fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandType {
     let name = &parsed_command.name;
     let args = &parsed_command.args;
 
-    match ctx.valid_commands.get(name) {
-        Some(command) => {
-            let command = command.clone();
+    if let Some(command) = ctx.valid_commands.get(name) {
+        let command = command.clone();
+        let args: Vec<Value> = args.iter().map(|arg| arg.to_value()).collect();
 
-            // TODO : add parsed arguments to internal command
-            let internal_command = InternalCommand::new(command, vec![]);
-            CommandType::Internal(internal_command)
-        }
-        None => {
-            let name = name.to_string();
-            let args: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
-            let external_command = ExternalCommand::new(name, args);
-            CommandType::External(external_command)
-        }
+        let internal_command = InternalCommand::new(command, args);
+        CommandType::Internal(internal_command)
+    } else {
+        let name = name.to_string();
+        let args: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
+        let external_command = ExternalCommand::new(name, args);
+        CommandType::External(external_command)
     }
 }

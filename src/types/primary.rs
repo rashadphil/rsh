@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use core::fmt::Debug;
-use std::{time::SystemTime};
+use core::fmt::{self, Debug};
+use std::time::SystemTime;
 
 use crate::views::baseview::BaseView;
 
@@ -18,6 +18,18 @@ pub enum Primitive {
     Time(SystemTime),
     Size(u64),
     Empty,
+}
+
+impl fmt::Display for Primitive {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Primitive::String(s) => write!(f, "{}", s),
+            Primitive::Integer(i) => write!(f, "{}", i.to_string()),
+            Primitive::Time(_) => todo!(),
+            Primitive::Size(_) => todo!(),
+            Primitive::Empty => todo!(),
+        }
+    }
 }
 
 impl Primitive {
@@ -54,6 +66,16 @@ pub enum Value {
     Object(Box<dyn RshObject>),
     List(Vec<Value>),
     Primitive(Primitive),
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Value::Object(_) => todo!(),
+            Value::List(_) => todo!(),
+            Value::Primitive(p) => write!(f, "{}", p.to_string()),
+        }
+    }
 }
 
 impl Value {

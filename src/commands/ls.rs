@@ -5,13 +5,13 @@ use crate::{
     types::{direntry::DirEntry, primary::Value},
 };
 
-use super::Command;
+use super::{Command, Args};
 
 #[derive(Debug)]
-pub struct Ls {}
+pub struct Ls;
 
 impl Command for Ls {
-    fn run(&self, args: Vec<Value>) -> Result<Value, ShellError> {
+    fn run(&self, args: Args) -> Result<Value, ShellError> {
         let current_dir = env::current_dir()?;
         let paths = fs::read_dir(current_dir)?;
 

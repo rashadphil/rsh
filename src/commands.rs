@@ -6,7 +6,7 @@ pub mod cd;
 pub mod ls;
 pub mod ps;
 
-use crate::{error::ShellError, types::primary::Value};
+use crate::{environment::Environment, error::ShellError, types::primary::Value};
 
 pub enum CommandType {
     Internal(InternalCommand),
@@ -25,6 +25,12 @@ pub struct ExternalCommand {
     pub args: Vec<String>,
 }
 
+#[derive(new)]
+pub struct Args {
+    pub env: Rc<Environment>,
+    pub args: Vec<Value>,
+}
+
 pub trait Command {
-    fn run(&self, args: Vec<Value>) -> Result<Value, ShellError>;
+    fn run(&self, args: Args) -> Result<Value, ShellError>;
 }
