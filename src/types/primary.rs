@@ -2,21 +2,17 @@ use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug};
 use std::time::SystemTime;
 
-use crate::views::baseview::BaseView;
+use crate::{error::ShellError, parser, views::baseview::BaseView};
 
-use super::descriptor::Descriptor;
+use super::{datadict::DataDict, descriptor::Descriptor};
 
-pub trait RshObject: Debug {
-    fn data_descriptors(&self) -> Vec<Descriptor>;
-    fn get_data(&self, desc: &Descriptor) -> &Value;
-}
-
-#[derive(Debug)]
+#[derive(Debug, Ord, Eq, PartialOrd, PartialEq)]
 pub enum Primitive {
     String(String),
     Integer(i64),
     Time(SystemTime),
     Size(u64),
+    None,
 }
 
 impl fmt::Display for Primitive {
@@ -26,6 +22,7 @@ impl fmt::Display for Primitive {
             Primitive::Integer(i) => write!(f, "{}", i),
             Primitive::Time(_) => todo!(),
             Primitive::Size(_) => todo!(),
+            Primitive::None => todo!(),
         }
     }
 }
@@ -54,13 +51,14 @@ impl Primitive {
                     format!("{:.2} bytes", bytes)
                 }
             }
+            Primitive::None => "".to_string(),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Ord, Eq, PartialOrd, PartialEq)]
 pub enum Value {
-    Object(Box<dyn RshObject>),
+    Object(DataDict),
     List(Vec<Value>),
     Primitive(Primitive),
 }
@@ -75,10 +73,39 @@ impl fmt::Display for Value {
     }
 }
 
+impl From<&parser::Val> for Value {
+    fn from(input: &parser::Val) -> Self {
+        match input {
+            parser::Val::Bool(_) => todo!(),
+            parser::Val::String(s) => Value::string(s),
+            parser::Val::List(_) => todo!(),
+            parser::Val::Num(n) => Value::int(*n),
+        }
+    }
+}
+
+impl From<&parser::Expr> for Value {
+    fn from(input: &parser::Expr) -> Self {
+        match input {
+            parser::Expr::Val(v) => Value::from(v),
+            parser::Expr::LambdaExpr(_, _) => todo!(),
+            parser::Expr::Command(_, _) => todo!(),
+        }
+    }
+}
+
 impl Value {
     pub fn data_descriptors(&self) -> Vec<Descriptor> {
         match self {
             Value::Object(o) => o.data_descriptors(),
+            Value::List(_l) => todo!(),
+            Value::Primitive(_p) => todo!(),
+        }
+    }
+
+    pub fn get_data_from_key(&self, key: impl Into<String>) -> &Value {
+        match self {
+            Value::Object(o) => o.get_data_from_key(key.into()),
             Value::List(_l) => todo!(),
             Value::Primitive(_p) => todo!(),
         }
@@ -100,8 +127,8 @@ impl Value {
         }
     }
 
-    pub fn object(value: impl RshObject + 'static) -> Self {
-        Value::Object(Box::new(value))
+    pub fn object(dict: DataDict) -> Self {
+        Value::Object(dict)
     }
 
     pub fn list(values: impl Into<Vec<Value>>) -> Self {
@@ -122,6 +149,19 @@ impl Value {
 
     pub fn size(size: impl Into<u64>) -> Self {
         Value::Primitive(Primitive::Size(size.into()))
+    }
+
+    pub fn none() -> Self {
+        Value::Primitive(Primitive::None)
+    }
+}
+
+impl Value {
+    pub fn to_int(&self) -> Result<i64, ShellError> {
+        match self {
+            Value::Primitive(Primitive::Integer(i)) => Ok(*i),
+            _ => Err(ShellError::new("Expected an integer")),
+        }
     }
 }
 

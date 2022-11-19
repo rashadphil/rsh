@@ -10,9 +10,10 @@ use rustyline::hint::HistoryHinter;
 use colored::*;
 use rustyline::{CompletionType, Config, Editor};
 use rustyline_derive::{Completer, Helper, Hinter, Validator};
+use stream::InStream;
 
 use std::collections::BTreeMap;
-use std::process::{Stdio};
+use std::process::Stdio;
 use std::rc::Rc;
 use types::primary::Value;
 
@@ -27,6 +28,7 @@ mod commands;
 mod environment;
 mod error;
 mod parser;
+mod stream;
 mod types;
 mod views;
 
@@ -85,10 +87,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ls = commands::ls::Ls;
     let ps = commands::ps::Ps;
     let cd = commands::cd::Cd;
+    let sortby = commands::sortby::SortBy;
+    let limit = commands::limit::Limit;
 
     context.valid_commands.insert("ls".to_string(), Rc::new(ls));
     context.valid_commands.insert("ps".to_string(), Rc::new(ps));
     context.valid_commands.insert("cd".to_string(), Rc::new(cd));
+    context
+        .valid_commands
+        .insert("sortby".to_string(), Rc::new(sortby));
+
+    context
+        .valid_commands
+        .insert("limit".to_string(), Rc::new(limit));
 
     loop {
         let cwd = context.env.cwd();
@@ -134,14 +145,14 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
 
                 let mut pipeline_iter = command_pipeline.into_iter().peekable();
 
-                let (curr, next) = (pipeline_iter.next(), pipeline_iter.peek());
+                let (curr, next) = (pipeline_iter.next(), pipeline_iter.next());
 
                 match (curr, next) {
                     (None, None) => unreachable!(),
                     (None, Some(_)) => unreachable!(),
                     (Some(last_command), None) => match last_command {
                         CommandType::Internal(internal) => {
-                            let result = match internal.run(ctx) {
+                            let result = match internal.run(ctx, None) {
                                 Ok(val) => val,
                                 Err(e) => return LineResult::Error(e.to_string()),
                             };
@@ -166,9 +177,35 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
                     },
                     (Some(first_command), Some(second_command)) => {
                         match (first_command, second_command) {
-                            (CommandType::Internal(_), CommandType::Internal(_)) => todo!(),
-                            (CommandType::Internal(_), CommandType::External(_)) => todo!(),
-                            (CommandType::External(_), CommandType::Internal(_)) => todo!(),
+                            (CommandType::Internal(first), CommandType::Internal(second)) => {
+                                let result = match first.run(ctx, None) {
+                                    Ok(val) => val,
+                                    Err(e) => return LineResult::Error(e.to_string()),
+                                };
+
+                                let input_stream = InStream::new(result);
+
+                                let result2 = match second.run(ctx, Some(input_stream)) {
+                                    Ok(val) => val,
+                                    Err(e) => return LineResult::Error(e.to_string()),
+                                };
+
+                                let base_view = result2.to_base_view();
+                                let rendered = base_view.render();
+                                for line in rendered {
+                                    println!("{}", line);
+                                }
+                            }
+                            (CommandType::Internal(_), CommandType::External(_)) => {
+                                return LineResult::Error(
+                                    "Internal to External Pipe not yet implemented!".to_string(),
+                                )
+                            }
+                            (CommandType::External(_), CommandType::Internal(_)) => {
+                                return LineResult::Error(
+                                    "External to Internal Pipe not yet implemented!".to_string(),
+                                )
+                            }
                             (CommandType::External(first), CommandType::External(second)) => {
                                 let child_one = match first.run(Stdio::inherit(), Stdio::piped()) {
                                     Ok(child) => child,
@@ -211,7 +248,7 @@ fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandTy
 
     if let Some(command) = ctx.valid_commands.get(name) {
         let command = command.clone();
-        let args: Vec<Value> = args.iter().map(|arg| arg.to_value()).collect();
+        let args: Vec<Value> = args.iter().map(Value::from).collect();
 
         let internal_command = InternalCommand::new(command, args);
         CommandType::Internal(internal_command)

@@ -1,11 +1,17 @@
 use std::error;
 use std::fmt;
 
-use derive_new::new;
-
-#[derive(Debug, new)]
+#[derive(Debug)]
 pub struct ShellError {
     title: String,
+}
+
+impl ShellError {
+    pub fn new(title: impl Into<String>) -> Self {
+        Self {
+            title: title.into(),
+        }
+    }
 }
 
 impl error::Error for ShellError {}

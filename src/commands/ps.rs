@@ -1,6 +1,6 @@
 use crate::{
     error::ShellError,
-    types::{primary::Value, process::Process},
+    types::{primary::Value, process::{process_dict}},
 };
 use sysinfo::SystemExt;
 
@@ -17,7 +17,8 @@ impl Command for Ps {
         let mut process_entries = vec![];
 
         for process in process_list {
-            let entry = Value::object(Process::new(process)?);
+            let dict = process_dict(process);
+            let entry = Value::object(dict?);
             process_entries.push(entry);
         }
 

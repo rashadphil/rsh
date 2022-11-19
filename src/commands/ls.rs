@@ -2,7 +2,10 @@ use std::{env, fs};
 
 use crate::{
     error::ShellError,
-    types::{direntry::DirEntry, primary::Value},
+    types::{
+        direntry::{direntry_dict},
+        primary::Value,
+    },
 };
 
 use super::{Args, Command};
@@ -26,7 +29,8 @@ impl Command for Ls {
         let mut dir_entries = vec![];
 
         for path in paths {
-            let entry = Value::object(DirEntry::new(path?)?);
+            let dict = direntry_dict(path?);
+            let entry = Value::object(dict?);
             dir_entries.push(entry);
         }
 

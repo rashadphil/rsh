@@ -11,3 +11,6 @@ func zip_only_completions() {
   ls | filter f -> f.extension = ".zip"
 }
 
+
+ls | sortby size
+

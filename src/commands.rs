@@ -8,8 +8,12 @@ use derive_new::new;
 pub mod cd;
 pub mod ls;
 pub mod ps;
+pub mod sortby;
+pub mod limit;
 
-use crate::{environment::Environment, error::ShellError, types::primary::Value, Context};
+use crate::{
+    environment::Environment, error::ShellError, stream::InStream, types::primary::Value, Context,
+};
 
 pub enum CommandType {
     Internal(InternalCommand),
@@ -23,9 +27,9 @@ pub struct InternalCommand {
 }
 
 impl InternalCommand {
-    pub fn run(self, ctx: &Context) -> Result<Value, ShellError> {
+    pub fn run(self, ctx: &Context, instream: Option<InStream>) -> Result<Value, ShellError> {
         let command = self.command;
-        let args = Args::new(ctx.env.clone(), self.args);
+        let args = Args::new(ctx.env.clone(), self.args, instream);
         command.run(args)
     }
 }
@@ -50,6 +54,7 @@ impl ExternalCommand {
 pub struct Args {
     pub env: Rc<Environment>,
     pub args: Vec<Value>,
+    pub instream: Option<InStream>,
 }
 
 pub trait Command {
