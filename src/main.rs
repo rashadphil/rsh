@@ -1,7 +1,7 @@
 use std::borrow::Cow::Owned;
 
-use commands::{Args, CommandType, ExternalCommand, InternalCommand};
-use parser::ParsedCommand;
+use commands::{CommandType, ExternalCommand, InternalCommand};
+use parser::{ParsedCommand, ParsedPipeline};
 use rustyline::completion::FilenameCompleter;
 use rustyline::error::ReadlineError;
 use rustyline::highlight::Highlighter;
@@ -12,7 +12,7 @@ use rustyline::{CompletionType, Config, Editor};
 use rustyline_derive::{Completer, Helper, Hinter, Validator};
 
 use std::collections::BTreeMap;
-use std::process;
+use std::process::{Stdio};
 use std::rc::Rc;
 use types::primary::Value;
 
@@ -45,7 +45,6 @@ struct RushHelper {
 }
 
 impl Highlighter for RushHelper {
-
     fn highlight_hint<'h>(&self, hint: &'h str) -> std::borrow::Cow<'h, str> {
         let colored = hint.truecolor(140, 140, 140);
         Owned(format!("{}", colored))
@@ -56,12 +55,7 @@ impl Highlighter for RushHelper {
         candidate: &'c str,
         completion: CompletionType,
     ) -> std::borrow::Cow<'c, str> {
-        let colored = if candidate.contains(".txt") {
-            candidate.black().on_bright_white()
-        } else {
-            candidate.white()
-        };
-        // let colored = candidate.red();
+        let colored = candidate.white();
         Owned(format!("{}", colored))
     }
 }
@@ -75,6 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .history_ignore_space(true)
         .completion_type(CompletionType::CircularList)
         .auto_add_history(true)
+        .max_history_size(1000)
         .build();
 
     let mut rl = Editor::with_config(config)?;
@@ -135,38 +130,60 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
             _ => {
                 let parsed_pipeline = parser::parse(&line);
 
-                // TODO : add support for piping
-                let first_command = &parsed_pipeline.commands[0];
-                let command = parsed_to_command(ctx, first_command);
-                match command {
-                    CommandType::Internal(internal) => {
-                        let command = internal.command;
+                let command_pipeline = parsed_to_pipeline(ctx, &parsed_pipeline);
 
-                        let args = Args::new(ctx.env.clone(), internal.args);
+                let mut pipeline_iter = command_pipeline.into_iter().peekable();
 
-                        let result = match command.run(args) {
-                            Ok(res) => res,
-                            Err(e) => return LineResult::Error(e.to_string()),
-                        };
+                let (curr, next) = (pipeline_iter.next(), pipeline_iter.peek());
 
-                        let base_view = result.to_base_view();
-                        let rendered = base_view.render();
-                        for line in rendered {
-                            println!("{}", line);
-                        }
-                    }
-                    CommandType::External(external) => {
-                        let name = external.command;
-                        let args = external.args;
-
-                        let child = process::Command::new(&name).args(args).spawn();
-
-                        match child {
-                            Ok(mut child) => {
-                                child.wait().unwrap();
+                match (curr, next) {
+                    (None, None) => unreachable!(),
+                    (None, Some(_)) => unreachable!(),
+                    (Some(last_command), None) => match last_command {
+                        CommandType::Internal(internal) => {
+                            let result = match internal.run(ctx) {
+                                Ok(val) => val,
+                                Err(e) => return LineResult::Error(e.to_string()),
+                            };
+                            let base_view = result.to_base_view();
+                            let rendered = base_view.render();
+                            for line in rendered {
+                                println!("{}", line);
                             }
-                            Err(_) => println!("rush: command not found {}", name),
-                        };
+                        }
+                        CommandType::External(external) => {
+                            let mut child = match external.run(Stdio::inherit(), Stdio::inherit()) {
+                                Ok(child) => child,
+                                Err(_) => {
+                                    return LineResult::Error(format!(
+                                        "rush : command not found {}",
+                                        external.command
+                                    ))
+                                }
+                            };
+                            child.wait();
+                        }
+                    },
+                    (Some(first_command), Some(second_command)) => {
+                        match (first_command, second_command) {
+                            (CommandType::Internal(_), CommandType::Internal(_)) => todo!(),
+                            (CommandType::Internal(_), CommandType::External(_)) => todo!(),
+                            (CommandType::External(_), CommandType::Internal(_)) => todo!(),
+                            (CommandType::External(first), CommandType::External(second)) => {
+                                let child_one = match first.run(Stdio::inherit(), Stdio::piped()) {
+                                    Ok(child) => child,
+                                    Err(e) => return LineResult::Error(e.to_string()),
+                                };
+                                let mut child_two = match second
+                                    .run(Stdio::from(child_one.stdout.unwrap()), Stdio::inherit())
+                                {
+                                    Ok(child) => child,
+                                    Err(e) => return LineResult::Error(e.to_string()),
+                                };
+
+                                child_two.wait();
+                            }
+                        }
                     }
                 }
 
@@ -177,6 +194,15 @@ fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> L
         Err(ReadlineError::Eof) => LineResult::Break,
         Err(err) => LineResult::Fatal(err.to_string()),
     }
+}
+
+fn parsed_to_pipeline(ctx: &Context, parsed_pipeline: &ParsedPipeline) -> Vec<CommandType> {
+    let commands = &parsed_pipeline.commands;
+
+    commands
+        .iter()
+        .map(|command| parsed_to_command(ctx, command))
+        .collect()
 }
 
 fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandType {

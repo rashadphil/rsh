@@ -1,47 +1,4 @@
 #V2
-ls
-ps
-ls
-ps
-p
-ls
-git 
-ls
-cargo run
-ls
-ps
-ls
-ps
-ls
-ps
-ls
-ps
-ls
-exit
-ls
-ps
-ls
-cd
-ls
- ls
-ls
-cd
-ls
-git status
-ls
-ps
-ls
-lss
-pwd
-ps
-ls
-ps
-ls
-ps
-ls
-clear
-for 
-ls
 ps
 fish
 ls
@@ -57,7 +14,91 @@ ls
 ps
 cd
 ls
-nu
 ls
 pwd
 ls
+cargo
+cargo run
+ps
+cd
+ls
+cd
+cd /
+cd .
+ls
+cd src/
+ls
+ls ok
+cargo
+pwd
+fd
+ps
+ls
+'ls
+ok
+yeallow
+ls
+cargo run
+ls
+r
+really cool
+pool
+clear
+ls
+ls ok | second command
+pwd ok | yes
+ls
+pwd
+lsl
+ls -l
+pwd
+ls
+cwd
+ok
+dw
+now
+spot
+ls
+fzf rush
+fzf
+rg rush
+vim
+nvim
+code .
+ls
+code .
+rush .
+ls
+code .
+cat Cargo.toml
+cargo run
+code .
+exit
+ls
+pwd
+for 
+$PATH
+echo "ok" | bat
+echo "ok" | cat
+echo "ok" | rg
+echo "ok" | bat
+bat ok
+bat "ok"
+bat ok
+bat "ok"
+bat src/ 
+bat src/commands.rs  
+bat "o
+echo "ok" | bat
+pwd | bat
+s
+ls
+ps
+ok
+pwd
+bat ok
+bat history.txt 
+ls
+bat ok
+bat .git/
+bat Cargo.toml 
