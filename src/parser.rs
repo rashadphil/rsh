@@ -9,8 +9,6 @@ use chumsky::{
 
 use derive_new::new;
 
-use crate::types;
-
 pub type Span = std::ops::Range<usize>;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

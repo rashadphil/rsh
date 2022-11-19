@@ -6,13 +6,14 @@ use std::{
 use derive_new::new;
 
 pub mod cd;
+pub mod limit;
 pub mod ls;
 pub mod ps;
 pub mod sortby;
-pub mod limit;
 
 use crate::{
-    environment::Environment, error::ShellError, stream::InStream, types::primary::Value, Context,
+    context::Context, environment::Environment, error::ShellError, stream::InStream,
+    types::primary::Value,
 };
 
 pub enum CommandType {
