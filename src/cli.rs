@@ -21,7 +21,8 @@ use crate::context::Context;
 use crate::views::RenderView;
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let prompt_char = "➜ ";
+    let prompt_char = "➜";
+    let branch_char = " ";
 
     let mut context = Context::default();
 
@@ -58,6 +59,22 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         let cwd = context.env.cwd();
+
+        let repo = git_repository::discover(&cwd).ok();
+
+        let branch_name = match repo {
+            Some(repo) => {
+                let head = repo.head_name()?;
+                head.map(|head| head.shorten().to_string())
+            }
+            None => None,
+        };
+
+        let branch_str = match branch_name {
+            Some(branch_name) => format!("{}{}", branch_char, branch_name).to_string(),
+            None => "".to_string(),
+        };
+
         let truncated_cwd = cwd
             .file_name()
             .expect("Failed to read path")
@@ -65,8 +82,9 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             .to_string();
 
         let readline = rl.readline(&format!(
-            " {}\n {} ",
+            " {} on {} \n {} ",
             truncated_cwd.cyan().bold(),
+            branch_str.purple().bold(),
             prompt_char.red().bold()
         ));
 
