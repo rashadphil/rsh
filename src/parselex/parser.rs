@@ -76,6 +76,7 @@ fn ast_builder() -> impl Parser<Token, ParsedPipeline, Error = Simple<Token>> {
     let num_ident = filter_map(|span, tok: Token| match tok {
         Token::Item(item) => Ok(Val::String(item)),
         Token::Num(n) => Ok(Val::Num(n)),
+        Token::QuotedItem(item) => Ok(Val::String(item)),
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(tok))),
     });
 
