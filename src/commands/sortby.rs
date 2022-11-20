@@ -1,4 +1,4 @@
-use crate::{error::ShellError, types::primary::Value};
+use crate::{error::ShellError, stream::RushStream, types::primary::Value};
 
 use super::{Args, Command};
 
@@ -11,16 +11,13 @@ impl Command for SortBy {
             return Err(ShellError::new("No sortby field provided"));
         }
 
-        let instream = match args.instream {
-            Some(stream) => stream,
-            None => return Err(ShellError::new("No values given to sortby")),
-        };
-
-        let mut objects = match instream.values {
-            Value::List(list) => list,
+        let mut objects = match args.instream {
+            RushStream::Internal(Value::List(list)) => list,
+            RushStream::External(_) => {
+                return Err(ShellError::new("external streams not supported yet"))
+            }
             _ => return Err(ShellError::new("sortby expects a list of objects")),
         };
-
 
         let sort_key = &args.args[0].to_string();
 

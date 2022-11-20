@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Environment {}
 
 impl Environment {

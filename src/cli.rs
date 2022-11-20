@@ -5,14 +5,15 @@ use rustyline::hint::HistoryHinter;
 use colored::*;
 use rustyline::{CompletionType, Config, Editor};
 
-use std::process::Stdio;
+use std::process::{Stdio};
 use std::rc::Rc;
 
 use crate::commands::{self, CommandType, ExternalCommand, InternalCommand};
+use crate::error::ShellError;
 use crate::parser::{self, ParsedCommand, ParsedPipeline};
 use crate::rushhelper::RushHelper;
 
-use crate::stream::InStream;
+use crate::stream::RushStream;
 use crate::types::primary::{ToBaseView, Value};
 
 use crate::context::Context;
@@ -69,10 +70,19 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         ));
 
         match process_readline(&context, readline) {
-            LineResult::Success(_) => continue,
-            LineResult::Break => break,
-            LineResult::Error(err) => println!("{}", err),
-            LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
+            Ok(line_res) => match line_res {
+                LineResult::Success(val) => {
+                    let base_view = val.to_base_view();
+                    let rendered = base_view.render();
+                    for line in rendered {
+                        println!("{}", line);
+                    }
+                }
+                LineResult::Break => break,
+                LineResult::Error(err) => println!("{}", err),
+                LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
+            },
+            Err(err) => println!("Error: {}", err),
         }
     }
 
@@ -80,108 +90,62 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 enum LineResult {
-    Success(String),
+    Success(Value),
     Break,
     Error(String),
     Fatal(String),
 }
 
-fn process_readline(ctx: &Context, readline: Result<String, ReadlineError>) -> LineResult {
+fn process_readline(
+    ctx: &Context,
+    readline: Result<String, ReadlineError>,
+) -> Result<LineResult, ShellError> {
     match readline {
         Ok(line) => match line.as_str().trim() {
-            "exit" => LineResult::Break,
-            "" => LineResult::Success("".to_string()),
+            "exit" => Ok(LineResult::Break),
+            "" => Ok(LineResult::Success(Value::none())),
             _ => {
                 let parsed_pipeline = parser::parse(&line);
                 let command_list = build_pipeline(ctx, &parsed_pipeline);
 
                 let mut pipeline_iter = command_list.into_iter().peekable();
 
-                let (curr, next) = (pipeline_iter.next(), pipeline_iter.next());
+                let mut stream = RushStream::None;
 
-                match (curr, next) {
-                    (None, None) => unreachable!(),
-                    (None, Some(_)) => unreachable!(),
-                    (Some(last_command), None) => match last_command {
-                        CommandType::Internal(internal) => {
-                            let result = match internal.run(ctx, None) {
-                                Ok(val) => val,
-                                Err(e) => return LineResult::Error(e.to_string()),
-                            };
-                            let base_view = result.to_base_view();
-                            let rendered = base_view.render();
-                            for line in rendered {
-                                println!("{}", line);
-                            }
-                        }
-                        CommandType::External(external) => {
-                            let mut child = match external.run(Stdio::inherit(), Stdio::inherit()) {
-                                Ok(child) => child,
-                                Err(_) => {
-                                    return LineResult::Error(format!(
-                                        "rush : command not found {}",
-                                        external.command
-                                    ))
-                                }
-                            };
-                            child.wait();
-                        }
-                    },
-                    (Some(first_command), Some(second_command)) => {
-                        match (first_command, second_command) {
-                            (CommandType::Internal(first), CommandType::Internal(second)) => {
-                                let result = match first.run(ctx, None) {
-                                    Ok(val) => val,
-                                    Err(e) => return LineResult::Error(e.to_string()),
-                                };
+                let final_result = loop {
+                    let (curr, next) = (pipeline_iter.next(), pipeline_iter.peek());
 
-                                let input_stream = InStream::new(result);
-
-                                let result2 = match second.run(ctx, Some(input_stream)) {
-                                    Ok(val) => val,
-                                    Err(e) => return LineResult::Error(e.to_string()),
-                                };
-
-                                let base_view = result2.to_base_view();
-                                let rendered = base_view.render();
-                                for line in rendered {
-                                    println!("{}", line);
-                                }
+                    stream = match (curr, next) {
+                        (Some(final_command), None) => match final_command {
+                            CommandType::Internal(internal) => {
+                                let result = internal.run(ctx, stream)?;
+                                break result;
                             }
-                            (CommandType::Internal(_), CommandType::External(_)) => {
-                                return LineResult::Error(
-                                    "Internal to External Pipe not yet implemented!".to_string(),
-                                )
+                            CommandType::External(external) => {
+                                let mut result = external.run(stream, Stdio::inherit())?;
+                                result.wait()?;
+                                break Value::none();
                             }
-                            (CommandType::External(_), CommandType::Internal(_)) => {
-                                return LineResult::Error(
-                                    "External to Internal Pipe not yet implemented!".to_string(),
-                                )
+                        },
+                        (Some(curr_command), Some(_)) => match curr_command {
+                            CommandType::Internal(internal) => {
+                                let result = internal.run(ctx, stream)?;
+                                RushStream::Internal(result)
                             }
-                            (CommandType::External(first), CommandType::External(second)) => {
-                                let child_one = match first.run(Stdio::inherit(), Stdio::piped()) {
-                                    Ok(child) => child,
-                                    Err(e) => return LineResult::Error(e.to_string()),
-                                };
-                                let mut child_two = match second
-                                    .run(Stdio::from(child_one.stdout.unwrap()), Stdio::inherit())
-                                {
-                                    Ok(child) => child,
-                                    Err(e) => return LineResult::Error(e.to_string()),
-                                };
-
-                                child_two.wait();
+                            CommandType::External(external) => {
+                                let result = external.run(stream, Stdio::piped())?;
+                                RushStream::External(result.stdout.unwrap().into())
                             }
-                        }
+                        },
+                        (_, _) => return Ok(LineResult::Error("Not yet implemented".to_string())),
                     }
-                }
-
-                LineResult::Success(line)
+                };
+                Ok(LineResult::Success(final_result))
             }
         },
-        Err(ReadlineError::Interrupted) => LineResult::Success("".to_string()),
-        Err(ReadlineError::Eof) => LineResult::Break,
-        Err(err) => LineResult::Fatal(err.to_string()),
+        Err(ReadlineError::Interrupted) => Ok(LineResult::Success(Value::none())),
+        Err(ReadlineError::Eof) => Ok(LineResult::Break),
+        Err(err) => Ok(LineResult::Fatal(err.to_string())),
     }
 }
 

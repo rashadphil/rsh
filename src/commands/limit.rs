@@ -1,4 +1,4 @@
-use crate::{error::ShellError, types::primary::Value};
+use crate::{error::ShellError, stream::RushStream, types::primary::Value};
 
 use super::{Args, Command};
 
@@ -11,18 +11,15 @@ impl Command for Limit {
             return Err(ShellError::new("No limit number provided"));
         }
 
-        let instream = match args.instream {
-            Some(stream) => stream,
-            None => return Err(ShellError::new("No values given to limit")),
-        };
-
-        let mut objects = match instream.values {
-            Value::List(list) => list,
+        let mut objects = match args.instream {
+            RushStream::Internal(Value::List(list)) => list,
+            RushStream::External(_) => {
+                return Err(ShellError::new("external streams not supported yet"))
+            }
             _ => return Err(ShellError::new("limit expects a list of objects")),
         };
 
         let limit = &args.args[0].to_int()?;
-
         objects.truncate(*limit as usize);
 
         Ok(Value::list(objects))

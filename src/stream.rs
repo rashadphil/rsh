@@ -1,7 +1,10 @@
-use crate::types::primary::Value;
-use derive_new::new;
+use std::process::Stdio;
 
-#[derive(Debug, new)]
-pub struct InStream {
-    pub values: Value,
+use crate::types::primary::Value;
+
+#[derive(Debug)]
+pub enum RushStream {
+    Internal(Value),
+    External(Stdio),
+    None,
 }

@@ -14,7 +14,6 @@ ls
 ps
 cd
 ls
-ls
 pwd
 ls
 cargo
@@ -102,3 +101,64 @@ ls
 bat ok
 bat .git/
 bat Cargo.toml 
+pwd
+ls
+badcommand
+echo "ok" | badcommand
+ls | sortby size
+ls | ls
+ls | ps
+nu
+ls
+touch src/commands/sortby.rs 
+ls | sortby
+ls
+ls | sortby size
+sortby
+sortby ok
+ls | sortby
+ls | sortby size
+ls
+ps
+ls 
+ps
+ls
+ls | sortby size
+ls
+ls | sortby size
+ls | sortby si
+ls | sortby size
+ls | sortby modified
+ls | sortby name
+touch src/commands/limit.rs 
+ls
+ls | limit 1
+ls | limit 2
+ls
+ls src/ 
+ls src/ | sortby size 
+ls src/ | limi
+ls src/ | limit
+ls src/ | limit 1
+ls src/ | limit 2
+ls src/ | limit 4
+cargo run
+ls
+ls src/ | limit 4
+ls src/ | sortby size 
+ls
+ls src/ | sortby size 
+touch src/context.rs 
+ls
+ls src/ 
+lsr src/  
+ls src/ | bat 
+ps
+ps | take 10
+ps | limit 10
+touch src/completion.rs      
+touch src/highlight.rs
+touch rushhelper.rs
+mv rushhelper.rs src/ 
+touch src/cli.rs
+cargo run
