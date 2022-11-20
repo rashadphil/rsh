@@ -34,6 +34,7 @@ impl fmt::Display for Val {
 #[derive(Debug, Clone)]
 pub enum Expr {
     Val(Val),
+    Assign(String, Box<Expr>),
     LambdaExpr(Val, Box<Expr>),
     Command(Val, Vec<Expr>),
 }
@@ -44,6 +45,7 @@ impl fmt::Display for Expr {
             Expr::Val(v) => write!(f, "{}", v),
             Expr::LambdaExpr(_, _) => todo!(),
             Expr::Command(_, _) => todo!(),
+            Expr::Assign(_, _) => todo!(),
         }
     }
 }

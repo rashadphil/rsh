@@ -55,6 +55,7 @@ impl Highlighter for RushHelper {
                 Token::Whitespace => (slice.normal(), state),
                 Token::QuotedItem(_) => (slice.bright_green(), state),
                 Token::OpenQuote => (slice.red(), LexState::Quoting),
+                Token::Equal => (slice.blue().bold(), state),
             };
             state = new_state;
             highlighted.push_str(&colored_slice.to_string());

@@ -16,12 +16,13 @@ pub enum Token {
     Arrow,
     Dot,
     Whitespace,
+    Equal,
 }
 
 pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let number = text::int::<_, Simple<char>>(10).map(|s| Token::Num(s.parse().unwrap()));
 
-    let is_word_char = |c: &char| *c != ' ';
+    let is_word_char = |c: &char| *c != ' ' && *c != '=';
 
     let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
         .repeated()
@@ -40,6 +41,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let pipe = just("|").to(Token::Pipe);
     let arrow = just("->").to(Token::Arrow);
     let dot = just(".").to(Token::Dot);
+    let equal = just("=").to(Token::Equal);
 
     let whitespace = filter::<_, _, Simple<char>>(move |c: &char| c.is_whitespace())
         .repeated()
@@ -52,6 +54,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .or(pipe)
         .or(arrow)
         .or(dot)
+        .or(equal)
         .or(whitespace)
         .or(item)
         .recover_with(skip_then_retry_until([]));

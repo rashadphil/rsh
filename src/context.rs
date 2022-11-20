@@ -9,13 +9,14 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn insert(&mut self, name: impl Into<String>, command: Rc<dyn Command>) {
+    pub fn insert_command(&mut self, name: impl Into<String>, command: Rc<dyn Command>) {
         self.valid_commands.insert(name.into(), command);
     }
 
     pub fn insert_commands(&mut self, commands: Vec<(impl Into<String>, Rc<dyn Command>)>) {
         for (name, command) in commands {
-            self.insert(name, command);
+            self.insert_command(name, command);
         }
     }
+
 }

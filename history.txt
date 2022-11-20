@@ -162,3 +162,99 @@ touch rushhelper.rs
 mv rushhelper.rs src/ 
 touch src/cli.rs
 cargo run
+git pull
+gp
+git push
+git pull
+git config pull.rebase false
+git pull
+gp
+git push
+clear
+ls
+touch src/commands/rev.rs 
+ls | sorby size | take 5 | rev
+ls | sorby size | take 5 
+ls | sortby size | take 5 |
+ls | sortby size | take 5 | rev
+ls | sortby size | rev 
+ls | sortby size | rev | take 5
+echo "isnt this so cool" | bat
+clear
+git status
+git add src/cli.rs  
+git add src/commands.rs  
+git add src/commands/rev.rs   
+git commit -m "added reversing"
+gp
+git push
+clear
+ls src/ | sortby size | rev | take 6 
+clear
+ps
+clear
+ps src/ | sortby memory | rev | take 6 
+echo " this is so so cool" | bat
+clear
+ps | sortby memory | rev | take 6
+echo "so so so cool" | bat
+alias
+alias "ok"="ls"
+clear
+ls
+alias "ok"="ls"
+touch src/commands/alias.rs 
+alias "ok"="ok"
+alias gcsm= "git commit"
+alias gcsm "git commit"
+cat ~/.zsh_history 
+cat ~/.zsh_history  
+ls ~/.zsh_history 
+cat ~/.zsh_history 
+cat $HOME/.zsh_history 
+cat /Users/rashad/.zsh_history 
+echo $HOME
+ls ~/Documents/ 
+fish
+ls ~/Documents/ 
+cat ~/Documents/ 
+cat "~/Documents/"
+touch src/utils.rs 
+cargo run
+ls ~/////Da
+ls ~
+ls ~/Documents/
+cat ~/Documents/ 
+ls ~/Documents/ 
+ls ~/Documents
+ls ~/Documents/ 
+cat ~/Documents/ 
+ls ~/Documents/ 
+cat ~/Documents/ 
+cat ~/.zshrc 
+ls ~/Documents/ 
+fish
+ls ~/Documents/ 
+ls README.md 
+ls src/
+cd src/ 
+..
+cd ..
+ls
+cd Documents/ 
+ls
+cd Diagram.drawio 
+cd things/ 
+cd rust/ 
+ls
+cd ok
+cd ~/Documents/
+cd things/ 
+cd rust/ 
+cd rush/ 
+rm src/utils.rs  
+ls 
+ls rustyline/ 
+ls rustyline/ | sortby size | rev | take 4
+ls
+rg println!

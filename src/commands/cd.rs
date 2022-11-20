@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use super::{Args, Command};
 use crate::{error::ShellError, types::primary::Value};
 
@@ -16,8 +18,15 @@ impl Command for Cd {
         let new_path = if args.args.is_empty() {
             home_path?
         } else {
-            let input_path = &args.args[0].to_string();
-            cwd.join(input_path)
+            let path_arg = &args.args[0].to_string();
+            let input_path = PathBuf::from(path_arg);
+
+            if input_path.is_absolute() || input_path.starts_with("~") {
+                let expanded = format!("{}", shellexpand::tilde(path_arg));
+                PathBuf::from(expanded)
+            } else {
+                cwd.join(input_path)
+            }
         };
 
         match env.set_cwd(&new_path) {

@@ -90,6 +90,7 @@ impl From<&parser::Expr> for Value {
             parser::Expr::Val(v) => Value::from(v),
             parser::Expr::LambdaExpr(_, _) => todo!(),
             parser::Expr::Command(_, _) => todo!(),
+            _ => todo!(),
         }
     }
 }

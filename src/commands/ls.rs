@@ -1,11 +1,8 @@
-use std::{env, fs};
+use std::{env, fs, path::PathBuf};
 
 use crate::{
     error::ShellError,
-    types::{
-        direntry::{direntry_dict},
-        primary::Value,
-    },
+    types::{direntry::direntry_dict, primary::Value},
 };
 
 use super::{Args, Command};
@@ -18,8 +15,15 @@ impl Command for Ls {
         let cwd = env::current_dir()?;
 
         let target_dir = if !args.args.is_empty() {
-            let input_path = &args.args[0].to_string();
-            cwd.join(input_path)
+            let path_arg = &args.args[0].to_string();
+            let input_path = PathBuf::from(path_arg.to_string());
+
+            if input_path.is_absolute() || input_path.starts_with("~") {
+                let expanded = format!("{}", shellexpand::tilde(path_arg));
+                PathBuf::from(expanded)
+            } else {
+                cwd.join(input_path)
+            }
         } else {
             cwd
         };

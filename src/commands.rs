@@ -6,17 +6,14 @@ use std::{
 use derive_new::new;
 
 pub mod cd;
-pub mod take;
 pub mod ls;
 pub mod ps;
-pub mod sortby;
 pub mod rev;
+pub mod sortby;
+pub mod take;
 
 use crate::{
-    context::Context,
-    environment::Environment,
-    error::ShellError,
-    stream::{RushStream},
+    context::Context, environment::Environment, error::ShellError, stream::RushStream,
     types::primary::Value,
 };
 
@@ -55,8 +52,14 @@ impl ExternalCommand {
             RushStream::None => Stdio::null(),
         };
 
+        let args: Vec<String> = self
+            .args
+            .iter()
+            .map(|arg| shellexpand::tilde(arg).into_owned())
+            .collect();
+
         Ok(process::Command::new(&self.command)
-            .args(&self.args)
+            .args(&args)
             .stdin(stdin)
             .stdout(stdout)
             .spawn()?)
