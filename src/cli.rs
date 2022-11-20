@@ -48,6 +48,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let cd = commands::cd::Cd;
     let sortby = commands::sortby::SortBy;
     let take = commands::take::Take;
+    let rev = commands::rev::Rev;
 
     context.insert_commands(vec![
         ("ls", Rc::new(ls)),
@@ -55,6 +56,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         ("cd", Rc::new(cd)),
         ("sortby", Rc::new(sortby)),
         ("take", Rc::new(take)),
+        ("rev", Rc::new(rev)),
     ]);
 
     loop {
@@ -104,6 +106,8 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             Err(err) => println!("Error: {}", err),
         }
     }
+
+    rl.save_history("history.txt")?;
 
     Ok(())
 }

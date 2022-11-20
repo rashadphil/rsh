@@ -10,6 +10,7 @@ pub mod take;
 pub mod ls;
 pub mod ps;
 pub mod sortby;
+pub mod rev;
 
 use crate::{
     context::Context,
