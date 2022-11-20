@@ -73,7 +73,12 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         let branch_str = match branch_name {
-            Some(branch_name) => format!("{}{}", branch_char, branch_name).to_string(),
+            Some(branch_name) => format!(
+                "on {}{}",
+                branch_char.purple().bold(),
+                branch_name.purple().bold()
+            )
+            .to_string(),
             None => "".to_string(),
         };
 
@@ -84,9 +89,9 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             .to_string();
 
         let readline = rl.readline(&format!(
-            " {} on {} \n {} ",
+            " {} {} \n {} ",
             truncated_cwd.cyan().bold(),
-            branch_str.purple().bold(),
+            branch_str,
             prompt_char.red().bold()
         ));
 
