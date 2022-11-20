@@ -3,12 +3,12 @@ use crate::{error::ShellError, stream::RushStream, types::primary::Value};
 use super::{Args, Command};
 
 #[derive(Debug)]
-pub struct Limit;
+pub struct Take;
 
-impl Command for Limit {
+impl Command for Take {
     fn run(&self, args: Args) -> Result<Value, ShellError> {
         if args.args.is_empty() {
-            return Err(ShellError::new("No limit number provided"));
+            return Err(ShellError::new("No take number provided"));
         }
 
         let mut objects = match args.instream {

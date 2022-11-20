@@ -6,7 +6,7 @@ use std::{
 use derive_new::new;
 
 pub mod cd;
-pub mod limit;
+pub mod take;
 pub mod ls;
 pub mod ps;
 pub mod sortby;

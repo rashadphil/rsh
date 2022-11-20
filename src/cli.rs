@@ -46,14 +46,14 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let ps = commands::ps::Ps;
     let cd = commands::cd::Cd;
     let sortby = commands::sortby::SortBy;
-    let limit = commands::limit::Limit;
+    let take = commands::take::Take;
 
     context.insert_commands(vec![
         ("ls", Rc::new(ls)),
         ("ps", Rc::new(ps)),
         ("cd", Rc::new(cd)),
         ("sortby", Rc::new(sortby)),
-        ("limit", Rc::new(limit)),
+        ("take", Rc::new(take)),
     ]);
 
     loop {
@@ -165,7 +165,7 @@ fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandTy
 
     if let Some(command) = ctx.valid_commands.get(name) {
         let command = command.clone();
-        let args : Vec<Value> = args.iter().map(Value::from).collect();
+        let args: Vec<Value> = args.iter().map(Value::from).collect();
 
         let internal_command = InternalCommand::new(command, args);
         CommandType::Internal(internal_command)
