@@ -19,6 +19,7 @@ colored = "2"
 indexmap = "1.9.2"
 git-repository = "0.28.0"
 shellexpand = "2.1"
+radix_trie = "0.2"
 
 # Use modified version of rustyline
 [patch.crates-io]

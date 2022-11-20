@@ -1,3 +1,4 @@
+use home::home_dir;
 use rustyline::completion::FilenameCompleter;
 use rustyline::error::ReadlineError;
 use rustyline::hint::HistoryHinter;
@@ -25,24 +26,8 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let branch_char = " ";
 
     let mut context = Context::default();
+    context.generate_externals();
 
-    let config = Config::builder()
-        .history_ignore_space(true)
-        .completion_type(CompletionType::CircularList)
-        .auto_add_history(true)
-        .max_history_size(1000)
-        .build();
-
-    let mut rl = Editor::with_config(config)?;
-    let h = RushHelper {
-        completer: FilenameCompleter::new(),
-        hinter: HistoryHinter {},
-    };
-    rl.set_helper(Some(h));
-
-    if rl.load_history("history.txt").is_err() {
-        println!("No previous history.");
-    }
     let ls = commands::ls::Ls;
     let ps = commands::ps::Ps;
     let cd = commands::cd::Cd;
@@ -58,6 +43,31 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         ("take", Rc::new(take)),
         ("rev", Rc::new(rev)),
     ]);
+    let context = context;
+
+    let config = Config::builder()
+        .history_ignore_space(true)
+        .completion_type(CompletionType::CircularList)
+        .auto_add_history(true)
+        .max_history_size(10000)
+        .build();
+
+    let mut rl = Editor::with_config(config)?;
+    let h = RushHelper {
+        completer: FilenameCompleter::new(),
+        hinter: HistoryHinter {},
+        context : context.clone(),
+    };
+    rl.set_helper(Some(h));
+
+    let home_config = home_dir().expect("Home directory not found");
+
+    let rush_history = home_config.join(".rush_history");
+    let rush_rc = home_config.join(".rushrc");
+
+    if rl.load_history(&rush_history).is_err() {
+        println!("Welcome to the Rush Shell!");
+    }
 
     loop {
         let cwd = context.env.cwd();
@@ -112,7 +122,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    rl.save_history("history.txt")?;
+    rl.save_history(&rush_history)?;
 
     Ok(())
 }

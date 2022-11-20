@@ -8,6 +8,7 @@ use std::io::Write;
 use colored::*;
 use rustyline_derive::{Completer, Helper, Hinter, Validator};
 
+use crate::context::Context;
 use crate::parselex::lex::Token;
 use crate::parselex::{self, Span};
 
@@ -17,6 +18,7 @@ pub struct RushHelper {
     pub completer: FilenameCompleter,
     #[rustyline(Hinter)]
     pub hinter: HistoryHinter,
+    pub context: Context,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -45,7 +47,10 @@ impl Highlighter for RushHelper {
             let (colored_slice, new_state) = match token {
                 Token::Num(_) => (slice.blue(), state),
                 Token::Item(_) => match state {
-                    LexState::Command => (slice.white().bold(), LexState::Arg),
+                    LexState::Command => match self.context.command_exists(slice) {
+                        true => (slice.white().bold(), LexState::Arg),
+                        false => (slice.bright_red(), LexState::Arg),
+                    },
                     LexState::Arg => (slice.cyan(), state),
                     LexState::Quoting => (slice.red(), state),
                 },
