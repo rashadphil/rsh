@@ -5,12 +5,13 @@ use rustyline::hint::HistoryHinter;
 use colored::*;
 use rustyline::{CompletionType, Config, Editor};
 
-use std::process::{Stdio};
+use std::process::Stdio;
 use std::rc::Rc;
 
 use crate::commands::{self, CommandType, ExternalCommand, InternalCommand};
 use crate::error::ShellError;
-use crate::parser::{self, ParsedCommand, ParsedPipeline};
+use crate::parselex;
+use crate::parselex::parser::{ParsedCommand, ParsedPipeline};
 use crate::rushhelper::RushHelper;
 
 use crate::stream::RushStream;
@@ -105,7 +106,7 @@ fn process_readline(
             "exit" => Ok(LineResult::Break),
             "" => Ok(LineResult::Success(Value::none())),
             _ => {
-                let parsed_pipeline = parser::parse(&line);
+                let parsed_pipeline = parselex::parser::parse(&line);
                 let command_list = build_pipeline(ctx, &parsed_pipeline);
 
                 let mut pipeline_iter = command_list.into_iter().peekable();
@@ -164,7 +165,7 @@ fn parsed_to_command(ctx: &Context, parsed_command: &ParsedCommand) -> CommandTy
 
     if let Some(command) = ctx.valid_commands.get(name) {
         let command = command.clone();
-        let args: Vec<Value> = args.iter().map(Value::from).collect();
+        let args : Vec<Value> = args.iter().map(Value::from).collect();
 
         let internal_command = InternalCommand::new(command, args);
         CommandType::Internal(internal_command)

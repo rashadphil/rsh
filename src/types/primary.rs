@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug};
 use std::time::SystemTime;
 
-use crate::{error::ShellError, parser, views::baseview::BaseView};
+use crate::{error::ShellError, views::baseview::BaseView, parselex::parser};
 
 use super::{datadict::DataDict, descriptor::Descriptor};
 

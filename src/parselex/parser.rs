@@ -9,59 +9,8 @@ use chumsky::{
 
 use derive_new::new;
 
-pub type Span = std::ops::Range<usize>;
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum Token {
-    Num(i64),
-    Item(String),
-    Pipe,
-    Arrow,
-    Dot,
-}
-
-fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
-    let number = text::int::<_, Simple<char>>(10).map(|s| Token::Num(s.parse().unwrap()));
-
-    let is_word_char = |c: &char| {
-        c.is_ascii_alphabetic()
-            || c.is_ascii_alphanumeric()
-            || *c == '_'
-            || *c == '/'
-            || *c == '.'
-            || *c == '-'
-            || *c == '~'
-    };
-
-    let item = filter::<_, _, Simple<char>>(move |c: &char| is_word_char(c))
-        .repeated()
-        .at_least(1)
-        .collect::<String>()
-        .map(Token::Item);
-
-    let quoted_item = just('"')
-        .ignore_then(filter(|c| *c != '"').repeated())
-        .then_ignore(just('"'))
-        .collect::<String>()
-        .map(Token::Item);
-
-    let pipe = just("|").to(Token::Pipe);
-    let arrow = just("->").to(Token::Arrow);
-    let dot = just(".").to(Token::Dot);
-
-    let token = number
-        .or(item)
-        .or(quoted_item)
-        .or(pipe)
-        .or(arrow)
-        .or(dot)
-        .recover_with(skip_then_retry_until([]));
-
-    token
-        .map_with_span(|tok, span| (tok, span))
-        .padded()
-        .repeated()
-}
+use super::lex::{lexer, Token};
+use super::Span;
 
 #[derive(Debug, Clone)]
 pub enum Val {
@@ -122,6 +71,7 @@ pub struct ParsedPipeline {
     pub commands: Vec<ParsedCommand>,
 }
 
+// Does not accept whitespace tokens!!!
 fn ast_builder() -> impl Parser<Token, ParsedPipeline, Error = Simple<Token>> {
     let num_ident = filter_map(|span, tok: Token| match tok {
         Token::Item(item) => Ok(Val::String(item)),
@@ -139,7 +89,6 @@ fn ast_builder() -> impl Parser<Token, ParsedPipeline, Error = Simple<Token>> {
     });
 
     // commands seperated by a Pipe
-
     command
         .separated_by(just(Token::Pipe))
         .map(ParsedPipeline::new)
@@ -152,10 +101,16 @@ pub fn parse(query: impl Into<String>) -> ParsedPipeline {
     let (tokens, mut err) = lexer().parse_recovery(query);
 
     // TODO : Error Handling
-    let tokens = tokens.unwrap();
+    let clean_tokens: Vec<(Token, Span)> = match tokens {
+        Some(toks) => toks
+            .into_iter()
+            .filter(|(tok, _)| !matches!(tok, Token::Whitespace))
+            .collect(),
+        None => vec![],
+    };
 
     let (ast, parse_errors) =
-        ast_builder().parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+        ast_builder().parse_recovery(Stream::from_iter(len..len + 1, clean_tokens.into_iter()));
 
     ast.unwrap()
 }

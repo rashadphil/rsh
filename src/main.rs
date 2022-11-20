@@ -5,7 +5,7 @@ mod context;
 mod environment;
 mod error;
 mod highlight;
-mod parser;
+mod parselex;
 mod rushhelper;
 mod stream;
 mod types;
