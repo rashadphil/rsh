@@ -13,7 +13,7 @@ use crate::commands::{self, CommandType, ExternalCommand, InternalCommand};
 use crate::error::ShellError;
 use crate::parselex;
 use crate::parselex::parser::{ParsedCommand, ParsedPipeline};
-use crate::rushhelper::{RushCompleter, RushHelper, PathChecker};
+use crate::rushhelper::{PathChecker, RushCompleter, RushHelper};
 
 use crate::stream::RushStream;
 use crate::types::primary::{ToBaseView, Value};
@@ -119,7 +119,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                 LineResult::Error(err) => println!("{}", err),
                 LineResult::Fatal(fatal_err) => panic!("Fatal Error : {}", fatal_err),
             },
-            Err(err) => println!("Error: {}", err),
+            Err(err) => println!("{}", err),
         }
     }
 
@@ -161,7 +161,13 @@ fn process_readline(
                                 break result;
                             }
                             CommandType::External(external) => {
-                                let mut result = external.run(stream, Stdio::inherit())?;
+                                let result = external.run(stream, Stdio::inherit());
+                                let mut result = match result {
+                                    Ok(child) => child,
+                                    Err(_) => {
+                                        return Err(ShellError::new("rush : command not found"))
+                                    }
+                                };
                                 result.wait()?;
                                 break Value::none();
                             }
