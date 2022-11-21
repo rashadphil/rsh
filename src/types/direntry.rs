@@ -12,12 +12,10 @@ pub fn direntry_dict(entry: fs::DirEntry) -> Result<DataDict, ShellError> {
     let metadata = entry.metadata()?;
     let len = metadata.len();
     let modified = metadata.modified()?;
-    let accessed = metadata.accessed()?;
 
     dict.insert("name", Value::string(file_name.to_string_lossy()));
     dict.insert("size", Value::size(len));
     dict.insert("modified", Value::time(modified));
-    dict.insert("accessed", Value::time(accessed));
 
     Ok(dict)
 }

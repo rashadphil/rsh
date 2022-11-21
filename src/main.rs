@@ -10,6 +10,7 @@ mod rushhelper;
 mod stream;
 mod types;
 mod views;
+mod utils;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     cli::run()

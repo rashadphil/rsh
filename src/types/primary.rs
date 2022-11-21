@@ -1,8 +1,12 @@
-use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug};
 use std::time::SystemTime;
 
-use crate::{error::ShellError, views::baseview::BaseView, parselex::parser};
+use crate::{
+    error::ShellError,
+    parselex::parser,
+    utils::{time_to_english, RelativeTime},
+    views::baseview::BaseView,
+};
 
 use super::{datadict::DataDict, descriptor::Descriptor};
 
@@ -13,6 +17,14 @@ pub enum Primitive {
     Time(SystemTime),
     Size(u64),
     None,
+}
+
+impl RelativeTime for SystemTime {
+    fn relative_time(&self) -> String {
+        let now = SystemTime::now();
+        let duration = now.duration_since(*self).unwrap();
+        time_to_english(duration.as_secs())
+    }
 }
 
 impl fmt::Display for Primitive {
@@ -32,10 +44,7 @@ impl Primitive {
         match self {
             Primitive::String(s) => s.to_string(),
             Primitive::Integer(i) => i.to_string(),
-            Primitive::Time(t) => {
-                let as_utc: DateTime<Utc> = (*t).into();
-                as_utc.date_naive().to_string()
-            }
+            Primitive::Time(t) => t.relative_time(),
             Primitive::Size(bytes) => {
                 let kilobytes = (*bytes as f32) / 1024.0;
                 let megabytes = kilobytes / 1024.0;
