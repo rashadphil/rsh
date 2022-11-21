@@ -49,7 +49,7 @@ impl ExternalCommand {
                 return Err(ShellError::new("internal -> external not supported yet"))
             }
             RushStream::External(stdin) => stdin,
-            RushStream::None => Stdio::null(),
+            RushStream::None => Stdio::inherit(),
         };
 
         let args: Vec<String> = self
