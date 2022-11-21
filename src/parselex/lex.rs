@@ -17,6 +17,7 @@ pub enum Token {
     Dot,
     Whitespace,
     Equal,
+    None,
 }
 
 pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {

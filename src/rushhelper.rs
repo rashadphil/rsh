@@ -1,36 +1,18 @@
-use rustyline::completion::{Completer, Pair};
 use rustyline::hint::HistoryHinter;
 use rustyline::CompletionType;
-use rustyline::{completion::FilenameCompleter, highlight::Highlighter};
+use rustyline::{highlight::Highlighter};
 use std::borrow::Cow::Owned;
-use std::path::PathBuf;
+use std::path::{self, PathBuf};
 use std::{env, fs};
 
 use colored::*;
 use rustyline_derive::{Completer, Helper, Hinter, Validator};
 
+use crate::completion::RushCompleter;
 use crate::context::Context;
 use crate::error::ShellError;
 use crate::parselex::lex::Token;
 use crate::parselex::{self};
-
-#[derive(Default)]
-pub struct RushCompleter {
-    pub file_completer: FilenameCompleter,
-}
-
-impl Completer for RushCompleter {
-    type Candidate = Pair;
-
-    fn complete(
-        &self,
-        line: &str,
-        pos: usize,
-        ctx: &rustyline::Context<'_>,
-    ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        self.file_completer.complete(line, pos, ctx)
-    }
-}
 
 #[derive(Helper, Completer, Hinter, Validator)]
 pub struct RushHelper {
@@ -60,7 +42,7 @@ impl PathChecker {
         let cwd = env::current_dir()?;
 
         // Get the part of the path before the last slash
-        let (search_dir, file_prefix) = match prefix.rsplit_once('/') {
+        let (search_dir, file_prefix) = match prefix.rsplit_once(path::MAIN_SEPARATOR) {
             Some((head, tail)) => (head, tail),
             None => ("", prefix),
         };
@@ -128,6 +110,7 @@ impl Highlighter for RushHelper {
                 Token::QuotedItem(_) => (slice.bright_green(), state),
                 Token::OpenQuote => (slice.red(), LexState::Quoting),
                 Token::Equal => (slice.blue().bold(), state),
+                _ => (slice.normal(), state),
             };
             state = new_state;
             highlighted.push_str(&colored_slice.to_string());

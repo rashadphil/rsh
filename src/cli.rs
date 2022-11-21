@@ -1,5 +1,4 @@
 use home::home_dir;
-use rustyline::completion::FilenameCompleter;
 use rustyline::error::ReadlineError;
 use rustyline::hint::HistoryHinter;
 
@@ -10,10 +9,11 @@ use std::process::Stdio;
 use std::rc::Rc;
 
 use crate::commands::{self, CommandType, ExternalCommand, InternalCommand};
+use crate::completion::RushCompleter;
 use crate::error::ShellError;
 use crate::parselex;
 use crate::parselex::parser::{ParsedCommand, ParsedPipeline};
-use crate::rushhelper::{PathChecker, RushCompleter, RushHelper};
+use crate::rushhelper::{PathChecker, RushHelper};
 
 use crate::stream::RushStream;
 use crate::types::primary::{ToBaseView, Value};
@@ -100,7 +100,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             .to_string();
 
         let readline = rl.readline(&format!(
-            " {} {} \n {} ",
+            "{} {} \n{} ",
             truncated_cwd.cyan().bold(),
             branch_str,
             prompt_char.red().bold()
