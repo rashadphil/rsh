@@ -13,7 +13,7 @@ use crate::commands::{self, CommandType, ExternalCommand, InternalCommand};
 use crate::error::ShellError;
 use crate::parselex;
 use crate::parselex::parser::{ParsedCommand, ParsedPipeline};
-use crate::rushhelper::RushHelper;
+use crate::rushhelper::{RushCompleter, RushHelper, PathChecker};
 
 use crate::stream::RushStream;
 use crate::types::primary::{ToBaseView, Value};
@@ -54,9 +54,10 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut rl = Editor::with_config(config)?;
     let h = RushHelper {
-        completer: FilenameCompleter::new(),
+        completer: RushCompleter::default(),
         hinter: HistoryHinter {},
-        context : context.clone(),
+        context: context.clone(),
+        path_checker: PathChecker {},
     };
     rl.set_helper(Some(h));
 
